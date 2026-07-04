@@ -28,6 +28,8 @@ function LoginForm() {
         setError(body.error || "Login failed.");
         return;
       }
+      // Clear dismissed notification IDs so all alerts show fresh after login
+      try { localStorage.removeItem("hw_dismissed_notifs"); } catch { /* ignore */ }
       router.replace(params.get("from") || "/dashboard");
       router.refresh();
     } catch {

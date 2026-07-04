@@ -39,6 +39,8 @@ export function Topbar({
     playLogout(); // fire the chime within the click gesture, before navigating away
     setLoading(true);
     await fetch("/api/auth/logout", { method: "POST" });
+    // Clear dismissed notifications so all alerts appear fresh on next login
+    try { localStorage.removeItem("hw_dismissed_notifs"); } catch { /* ignore */ }
     router.replace("/login");
     router.refresh();
   }
