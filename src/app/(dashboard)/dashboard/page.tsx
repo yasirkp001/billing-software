@@ -86,11 +86,11 @@ async function getExpiryAlerts() {
       where: {
         isActive: true,
         OR: [
-          { insuranceExpiry: { lte: soon } },
-          { fitnessExpiry: { lte: soon } },
-          { taxValidUpto: { lte: soon } },
-          { permitValidUpto: { lte: soon } },
-          { puccValidUpto: { lte: soon } },
+          { insuranceExpiry: { gte: new Date("2000-01-01"), lte: soon } },
+          { fitnessExpiry: { gte: new Date("2000-01-01"), lte: soon } },
+          { taxValidUpto: { gte: new Date("2000-01-01"), lte: soon } },
+          { permitValidUpto: { gte: new Date("2000-01-01"), lte: soon } },
+          { puccValidUpto: { gte: new Date("2000-01-01"), lte: soon } },
         ],
       },
       select: {
@@ -104,17 +104,25 @@ async function getExpiryAlerts() {
       },
     });
 
-    const alerts = [];
+    const alerts: {
+      vehicleId: string;
+      regNumber: string;
+      docType: string;
+      date: Date;
+      status: "expired" | "soon";
+    }[] = [];
+
     const docState = (d: Date | null) => {
       if (!d) return null;
       const dt = new Date(d);
+      if (isNaN(dt.getTime())) return null;
       if (dt < now) return "expired" as const;
       if (dt <= soon) return "soon" as const;
       return null;
     };
 
     for (const v of vehicles) {
-      const checks = [
+      const checks: { label: string; date: Date | null }[] = [
         { label: "Insurance", date: v.insuranceExpiry },
         { label: "Fitness", date: v.fitnessExpiry },
         { label: "Road Tax", date: v.taxValidUpto },
@@ -234,7 +242,7 @@ export default async function DashboardPage() {
             </span>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {alerts.slice(0, 6).map((a, idx) => (
+            {alerts.map((a, idx) => (
               <Link
                 key={`${a.vehicleId}-${a.docType}-${idx}`}
                 href={`/vehicles/${a.vehicleId}`}
@@ -259,16 +267,6 @@ export default async function DashboardPage() {
               </Link>
             ))}
           </div>
-          {alerts.length > 6 && (
-            <div className="mt-3 text-right">
-              <Link
-                href="/vehicles"
-                className="text-xs font-bold text-red-700 hover:underline"
-              >
-                View all vehicles in fleet →
-              </Link>
-            </div>
-          )}
         </div>
       )}
 

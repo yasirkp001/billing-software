@@ -23,6 +23,9 @@ const TYPE_ICON: Record<string, IconName> = {
   overdue: "invoices",
   insurance: "vehicles",
   fitness: "vehicles",
+  tax: "vehicles",
+  permit: "vehicles",
+  pucc: "vehicles",
   license: "drivers",
   tripsheet: "trip-sheets",
 };
@@ -127,7 +130,10 @@ export function NotificationBell() {
 
   useEffect(() => {
     load(false);
+    // Auto-refresh every 5 minutes so alerts update without user interaction
+    const interval = setInterval(() => load(true), 5 * 60 * 1000);
     return () => {
+      clearInterval(interval);
       if (toastTimer.current) clearTimeout(toastTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

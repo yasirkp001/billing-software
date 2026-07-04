@@ -160,6 +160,7 @@ export function ResourceManager({
       if (!res.ok) throw new Error(body.error || "Save failed");
       setModalOpen(false);
       load(query);
+      router.refresh();
     } catch (e) {
       setFormError(e instanceof Error ? e.message : "Save failed");
     } finally {

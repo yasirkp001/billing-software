@@ -5,7 +5,7 @@ import { money, formatDate } from "@/lib/format";
 export type Severity = "danger" | "warning" | "info";
 export type Notification = {
   id: string;
-  type: "overdue" | "insurance" | "fitness" | "license" | "tripsheet";
+  type: "overdue" | "insurance" | "fitness" | "tax" | "permit" | "pucc" | "license" | "tripsheet";
   title: string;
   detail: string;
   href: string;
@@ -75,7 +75,7 @@ export async function GET() {
       const ins = docState(v.insuranceExpiry);
       if (ins) {
         items.push({
-          id: `ins-${v.id}`,
+          id: `ins-${v.id}-${ins}`,
           type: "insurance",
           title: `${v.registrationNumber} — insurance ${ins === "expired" ? "expired" : "expiring"}`,
           detail: `${ins === "expired" ? "Expired" : "Expires"} ${formatDate(v.insuranceExpiry)}`,
@@ -86,7 +86,7 @@ export async function GET() {
       const fit = docState(v.fitnessExpiry);
       if (fit) {
         items.push({
-          id: `fit-${v.id}`,
+          id: `fit-${v.id}-${fit}`,
           type: "fitness",
           title: `${v.registrationNumber} — fitness ${fit === "expired" ? "expired" : "expiring"}`,
           detail: `${fit === "expired" ? "Expired" : "Expires"} ${formatDate(v.fitnessExpiry)}`,
@@ -97,9 +97,9 @@ export async function GET() {
       const tax = docState(v.taxValidUpto);
       if (tax) {
         items.push({
-          id: `tax-${v.id}`,
-          type: "insurance",
-          title: `${v.registrationNumber} — tax ${tax === "expired" ? "expired" : "expiring"}`,
+          id: `tax-${v.id}-${tax}`,
+          type: "tax",
+          title: `${v.registrationNumber} — road tax ${tax === "expired" ? "expired" : "expiring"}`,
           detail: `${tax === "expired" ? "Expired" : "Expires"} ${formatDate(v.taxValidUpto)}`,
           href: `/vehicles/${v.id}`,
           severity: tax === "expired" ? "danger" : "warning",
@@ -108,8 +108,8 @@ export async function GET() {
       const permit = docState(v.permitValidUpto);
       if (permit) {
         items.push({
-          id: `permit-${v.id}`,
-          type: "insurance",
+          id: `permit-${v.id}-${permit}`,
+          type: "permit",
           title: `${v.registrationNumber} — permit ${permit === "expired" ? "expired" : "expiring"}`,
           detail: `${permit === "expired" ? "Expired" : "Expires"} ${formatDate(v.permitValidUpto)}`,
           href: `/vehicles/${v.id}`,
@@ -119,8 +119,8 @@ export async function GET() {
       const pucc = docState(v.puccValidUpto);
       if (pucc) {
         items.push({
-          id: `pucc-${v.id}`,
-          type: "insurance",
+          id: `pucc-${v.id}-${pucc}`,
+          type: "pucc",
           title: `${v.registrationNumber} — PUCC ${pucc === "expired" ? "expired" : "expiring"}`,
           detail: `${pucc === "expired" ? "Expired" : "Expires"} ${formatDate(v.puccValidUpto)}`,
           href: `/vehicles/${v.id}`,
@@ -134,7 +134,7 @@ export async function GET() {
       const st = docState(dr.licenseExpiry);
       if (!st) continue;
       items.push({
-        id: `lic-${dr.id}`,
+        id: `lic-${dr.id}-${st}`,
         type: "license",
         title: `${dr.name} — license ${st === "expired" ? "expired" : "expiring"}`,
         detail: `${st === "expired" ? "Expired" : "Expires"} ${formatDate(dr.licenseExpiry)}`,
