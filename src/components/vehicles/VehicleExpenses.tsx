@@ -19,7 +19,10 @@ export const EXPENSE_CATEGORIES: { value: string; label: string }[] = [
   { value: "liability", label: "Liability / EMI" },
   { value: "maintenance", label: "Maintenance" },
   { value: "insurance", label: "Insurance" },
+  { value: "diesel", label: "Diesel" },
+  { value: "fasttag", label: "FASTag" },
   { value: "tax", label: "Tax" },
+  { value: "police", label: "Police" },
   { value: "other", label: "Other" },
   { value: "custom", label: "Custom (Type new...)" },
 ];
@@ -32,7 +35,10 @@ const CATEGORY_TONE: Record<string, string> = {
   liability: "bg-red-100 text-red-700",
   maintenance: "bg-amber-100 text-amber-700",
   insurance: "bg-blue-100 text-blue-700",
+  diesel: "bg-purple-100 text-purple-700",
+  fasttag: "bg-cyan-100 text-cyan-700",
   tax: "bg-gray-100 text-gray-600",
+  police: "bg-orange-100 text-orange-700",
   other: "bg-gray-100 text-gray-600",
 };
 
