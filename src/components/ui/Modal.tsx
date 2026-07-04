@@ -31,9 +31,9 @@ export function Modal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:items-center">
-      <div className={`w-full ${SIZES[size]} rounded-xl bg-white shadow-xl`}>
-        <div className="flex items-center justify-between border-b border-wood-100 px-5 py-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className={`w-full ${SIZES[size]} rounded-xl bg-white shadow-xl flex flex-col max-h-[calc(100vh-2rem)]`}>
+        <div className="flex items-center justify-between border-b border-wood-100 px-5 py-3 shrink-0">
           <h2 className="text-lg font-semibold text-wood-900">{title}</h2>
           <button
             onClick={onClose}
@@ -43,7 +43,7 @@ export function Modal({
             ✕
           </button>
         </div>
-        <div className="px-5 py-4">{children}</div>
+        <div className="px-5 py-4 overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   );
