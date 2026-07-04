@@ -44,16 +44,77 @@ const CATEGORY_TONE: Record<string, string> = {
 
 const todayInput = () => new Date().toISOString().slice(0, 10);
 
-export function VehicleExpenses({
+// ─── Section definitions ──────────────────────────────────────────────────────
+// Each section shows only entries whose category matches its filter,
+// and pre-selects its default category in the add form.
+
+type SectionDef = {
+  title: string;
+  defaultCategory: string;
+  /** categories shown in the dropdown for this section */
+  categories: typeof EXPENSE_CATEGORIES;
+  headerBg: string;
+  totalColor: string;
+};
+
+const GENERAL_CATS = EXPENSE_CATEGORIES.filter(
+  (c) => !["diesel", "fasttag", "police"].includes(c.value)
+);
+
+const SECTIONS: SectionDef[] = [
+  {
+    title: "Diesel",
+    defaultCategory: "diesel",
+    categories: [{ value: "diesel", label: "Diesel" }],
+    headerBg: "bg-purple-50 border-purple-100",
+    totalColor: "text-purple-700",
+  },
+  {
+    title: "FASTag",
+    defaultCategory: "fasttag",
+    categories: [{ value: "fasttag", label: "FASTag" }],
+    headerBg: "bg-cyan-50 border-cyan-100",
+    totalColor: "text-cyan-700",
+  },
+  {
+    title: "Police",
+    defaultCategory: "police",
+    categories: [{ value: "police", label: "Police" }],
+    headerBg: "bg-orange-50 border-orange-100",
+    totalColor: "text-orange-700",
+  },
+  {
+    title: "Liability & Expenses",
+    defaultCategory: "liability",
+    categories: GENERAL_CATS,
+    headerBg: "bg-white border-gray-100",
+    totalColor: "text-red-700",
+  },
+];
+
+// ─── Single ledger section ────────────────────────────────────────────────────
+
+function ExpenseSection({
+  section,
   vehicleId,
-  expenses,
+  allRows,
+  onAdd,
+  onDelete,
 }: {
+  section: SectionDef;
   vehicleId: string;
-  expenses: Expense[];
+  allRows: Expense[];
+  onAdd: (expense: Expense) => void;
+  onDelete: (id: string) => void;
 }) {
-  const router = useRouter();
-  const [rows, setRows] = useState<Expense[]>(expenses);
-  const [category, setCategory] = useState("liability");
+  const isSingleCat = section.categories.length === 1 && section.categories[0].value !== "custom";
+
+  // For single-category sections the filter is exact; for general it's everything else
+  const rows = isSingleCat
+    ? allRows.filter((r) => r.category === section.defaultCategory)
+    : allRows.filter((r) => !["diesel", "fasttag", "police"].includes(r.category));
+
+  const [category, setCategory] = useState(section.defaultCategory);
   const [customCategory, setCustomCategory] = useState("");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(todayInput());
@@ -65,15 +126,9 @@ export function VehicleExpenses({
     e.preventDefault();
     setError("");
     const amt = Number(amount);
-    if (!Number.isFinite(amt) || amt <= 0) {
-      setError("Enter a valid amount.");
-      return;
-    }
+    if (!Number.isFinite(amt) || amt <= 0) { setError("Enter a valid amount."); return; }
     const finalCategory = category === "custom" ? customCategory.trim() : category;
-    if (category === "custom" && !finalCategory) {
-      setError("Enter a custom category name.");
-      return;
-    }
+    if (category === "custom" && !finalCategory) { setError("Enter a custom category name."); return; }
     setSaving(true);
     try {
       const res = await fetch(`/api/vehicles/${vehicleId}/expenses`, {
@@ -83,14 +138,11 @@ export function VehicleExpenses({
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || "Failed to add expense");
-      setRows((prev) =>
-        [body.data, ...prev].sort((a, b) => +new Date(b.date) - +new Date(a.date))
-      );
+      onAdd(body.data);
       setAmount("");
       setNote("");
       setCustomCategory("");
-      setCategory("liability");
-      router.refresh();
+      setCategory(section.defaultCategory);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add expense");
     } finally {
@@ -98,47 +150,43 @@ export function VehicleExpenses({
     }
   }
 
-  async function deleteExpense(id: string) {
-    if (!confirm("Delete this expense entry?")) return;
-    const res = await fetch(`/api/vehicles/${vehicleId}/expenses/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      setRows((prev) => prev.filter((r) => r.id !== id));
-      router.refresh();
-    } else {
-      const body = await res.json().catch(() => ({}));
-      alert(body.error || "Delete failed");
-    }
-  }
-
   const total = rows.reduce((s, r) => s + r.amount, 0);
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-        <h3 className="text-sm font-bold text-gray-900">Liability &amp; Expenses</h3>
-        <span className="text-sm font-extrabold text-red-700">{money(total)}</span>
+    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className={`flex items-center justify-between border-b px-5 py-4 ${section.headerBg}`}>
+        <h3 className="text-sm font-bold text-gray-900">{section.title}</h3>
+        <span className={`text-sm font-extrabold ${section.totalColor}`}>{money(total)}</span>
       </div>
 
       {/* Add form */}
-      <form onSubmit={addExpense} className="grid grid-cols-1 gap-3 border-b border-gray-100 px-5 py-4 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
-        <Field label="Category">
-          <div className="flex flex-col gap-2">
-            <Select value={category} onChange={(e) => setCategory(e.target.value)}>
-              {EXPENSE_CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
-              ))}
-            </Select>
-            {category === "custom" && (
-              <Input
-                type="text"
-                value={customCategory}
-                placeholder="Enter custom category..."
-                onChange={(e) => setCustomCategory(e.target.value)}
-                required
-              />
-            )}
-          </div>
-        </Field>
+      <form
+        onSubmit={addExpense}
+        className="grid grid-cols-1 gap-3 border-b border-gray-100 px-5 py-4 sm:items-end"
+        style={{ gridTemplateColumns: isSingleCat ? "1fr 1fr auto" : "1fr 1fr 1fr auto" }}
+      >
+        {/* Category selector — hide for single-category sections */}
+        {!isSingleCat && (
+          <Field label="Category">
+            <div className="flex flex-col gap-2">
+              <Select value={category} onChange={(e) => setCategory(e.target.value)}>
+                {section.categories.map((c) => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+              </Select>
+              {category === "custom" && (
+                <Input
+                  type="text"
+                  value={customCategory}
+                  placeholder="Enter custom category..."
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  required
+                />
+              )}
+            </div>
+          </Field>
+        )}
         <Field label="Amount">
           <Input type="number" step="any" min="0" value={amount} placeholder="0" onChange={(e) => setAmount(e.target.value)} />
         </Field>
@@ -148,17 +196,21 @@ export function VehicleExpenses({
         <Button type="submit" disabled={saving} className="h-[38px]">
           <Icon name="plus" size={15} /> {saving ? "Adding…" : "Add"}
         </Button>
-        <div className="sm:col-span-4">
-          <Input value={note} placeholder="Note (optional) — e.g. EMI June, tyre change…" onChange={(e) => setNote(e.target.value)} />
+        <div style={{ gridColumn: isSingleCat ? "1 / 4" : "1 / 5" }}>
+          <Input value={note} placeholder="Note (optional)…" onChange={(e) => setNote(e.target.value)} />
         </div>
-        {error && <p className="text-xs font-medium text-red-600 sm:col-span-4">{error}</p>}
+        {error && (
+          <p className="text-xs font-medium text-red-600" style={{ gridColumn: isSingleCat ? "1 / 4" : "1 / 5" }}>
+            {error}
+          </p>
+        )}
       </form>
 
       {/* List */}
       {rows.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-10 text-center">
-          <Icon name="outstanding" size={24} className="text-gray-300" />
-          <p className="text-sm font-medium text-gray-400">No expenses recorded yet</p>
+        <div className="flex flex-col items-center gap-2 py-8 text-center">
+          <Icon name="outstanding" size={22} className="text-gray-300" />
+          <p className="text-sm font-medium text-gray-400">No entries yet</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -166,7 +218,9 @@ export function VehicleExpenses({
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/70">
                 <th className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Date</th>
-                <th className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Category</th>
+                {!isSingleCat && (
+                  <th className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Category</th>
+                )}
                 <th className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Note</th>
                 <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Amount</th>
                 <th className="px-5 py-2.5" />
@@ -176,16 +230,18 @@ export function VehicleExpenses({
               {rows.map((r) => (
                 <tr key={r.id} className="hover:bg-gray-50/60">
                   <td className="whitespace-nowrap px-5 py-3 text-gray-500">{formatDate(r.date)}</td>
-                  <td className="px-5 py-3">
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${CATEGORY_TONE[r.category] ?? CATEGORY_TONE.other}`}>
-                      {CATEGORY_LABEL[r.category] ?? r.category}
-                    </span>
-                  </td>
+                  {!isSingleCat && (
+                    <td className="px-5 py-3">
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${CATEGORY_TONE[r.category] ?? CATEGORY_TONE.other}`}>
+                        {CATEGORY_LABEL[r.category] ?? r.category}
+                      </span>
+                    </td>
+                  )}
                   <td className="px-5 py-3 text-gray-600">{r.note || "—"}</td>
                   <td className="whitespace-nowrap px-5 py-3 text-right font-bold text-gray-800">{money(r.amount)}</td>
                   <td className="px-5 py-3 text-right">
                     <button
-                      onClick={() => deleteExpense(r.id)}
+                      onClick={() => onDelete(r.id)}
                       className="text-gray-300 transition-colors hover:text-red-500"
                       aria-label="Delete expense"
                     >
@@ -197,14 +253,61 @@ export function VehicleExpenses({
             </tbody>
             <tfoot>
               <tr className="border-t border-gray-200 bg-gray-50/70">
-                <td colSpan={3} className="px-5 py-3 text-right font-bold text-gray-700">Total</td>
-                <td className="whitespace-nowrap px-5 py-3 text-right font-extrabold text-red-700">{money(total)}</td>
+                <td colSpan={isSingleCat ? 2 : 3} className="px-5 py-3 text-right font-bold text-gray-700">Total</td>
+                <td className={`whitespace-nowrap px-5 py-3 text-right font-extrabold ${section.totalColor}`}>{money(total)}</td>
                 <td />
               </tr>
             </tfoot>
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Main export ──────────────────────────────────────────────────────────────
+
+export function VehicleExpenses({
+  vehicleId,
+  expenses,
+}: {
+  vehicleId: string;
+  expenses: Expense[];
+}) {
+  const router = useRouter();
+  const [rows, setRows] = useState<Expense[]>(expenses);
+
+  function handleAdd(expense: Expense) {
+    setRows((prev) =>
+      [expense, ...prev].sort((a, b) => +new Date(b.date) - +new Date(a.date))
+    );
+    router.refresh();
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this expense entry?")) return;
+    const res = await fetch(`/api/vehicles/${vehicleId}/expenses/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setRows((prev) => prev.filter((r) => r.id !== id));
+      router.refresh();
+    } else {
+      const body = await res.json().catch(() => ({}));
+      alert(body.error || "Delete failed");
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {SECTIONS.map((section) => (
+        <ExpenseSection
+          key={section.title}
+          section={section}
+          vehicleId={vehicleId}
+          allRows={rows}
+          onAdd={handleAdd}
+          onDelete={handleDelete}
+        />
+      ))}
     </div>
   );
 }
