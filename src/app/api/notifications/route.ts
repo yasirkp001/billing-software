@@ -29,7 +29,13 @@ export async function GET() {
       prisma.vehicle.findMany({
         where: {
           isActive: true,
-          OR: [{ insuranceExpiry: { lte: soon } }, { fitnessExpiry: { lte: soon } }],
+          OR: [
+            { insuranceExpiry: { lte: soon } },
+            { fitnessExpiry: { lte: soon } },
+            { taxValidUpto: { lte: soon } },
+            { permitValidUpto: { lte: soon } },
+            { puccValidUpto: { lte: soon } },
+          ],
         },
       }),
       prisma.driver.findMany({ where: { isActive: true, licenseExpiry: { lte: soon } } }),
@@ -57,7 +63,7 @@ export async function GET() {
       });
     }
 
-    // Vehicle insurance / fitness expiry.
+    // Vehicle insurance / fitness / tax / permit / pucc expiry.
     const docState = (d: Date | null) => {
       if (!d) return null;
       const dt = new Date(d);
@@ -86,6 +92,39 @@ export async function GET() {
           detail: `${fit === "expired" ? "Expired" : "Expires"} ${formatDate(v.fitnessExpiry)}`,
           href: `/vehicles/${v.id}`,
           severity: fit === "expired" ? "danger" : "warning",
+        });
+      }
+      const tax = docState(v.taxValidUpto);
+      if (tax) {
+        items.push({
+          id: `tax-${v.id}`,
+          type: "insurance",
+          title: `${v.registrationNumber} — tax ${tax === "expired" ? "expired" : "expiring"}`,
+          detail: `${tax === "expired" ? "Expired" : "Expires"} ${formatDate(v.taxValidUpto)}`,
+          href: `/vehicles/${v.id}`,
+          severity: tax === "expired" ? "danger" : "warning",
+        });
+      }
+      const permit = docState(v.permitValidUpto);
+      if (permit) {
+        items.push({
+          id: `permit-${v.id}`,
+          type: "insurance",
+          title: `${v.registrationNumber} — permit ${permit === "expired" ? "expired" : "expiring"}`,
+          detail: `${permit === "expired" ? "Expired" : "Expires"} ${formatDate(v.permitValidUpto)}`,
+          href: `/vehicles/${v.id}`,
+          severity: permit === "expired" ? "danger" : "warning",
+        });
+      }
+      const pucc = docState(v.puccValidUpto);
+      if (pucc) {
+        items.push({
+          id: `pucc-${v.id}`,
+          type: "insurance",
+          title: `${v.registrationNumber} — PUCC ${pucc === "expired" ? "expired" : "expiring"}`,
+          detail: `${pucc === "expired" ? "Expired" : "Expires"} ${formatDate(v.puccValidUpto)}`,
+          href: `/vehicles/${v.id}`,
+          severity: pucc === "expired" ? "danger" : "warning",
         });
       }
     }

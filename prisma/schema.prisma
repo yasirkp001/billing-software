@@ -59,6 +59,7 @@ model Vehicle {
   taxValidUpto         DateTime?
   permitValidUpto      DateTime?
   puccValidUpto        DateTime?
+  area                 String      @default("")
   isActive             Boolean     @default(true)
   notes                String      @default("")
   bookings             Booking[]

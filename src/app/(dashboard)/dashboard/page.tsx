@@ -78,8 +78,77 @@ async function getStats() {
   }
 }
 
+async function getExpiryAlerts() {
+  try {
+    const now = new Date();
+    const soon = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const vehicles = await prisma.vehicle.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          { insuranceExpiry: { lte: soon } },
+          { fitnessExpiry: { lte: soon } },
+          { taxValidUpto: { lte: soon } },
+          { permitValidUpto: { lte: soon } },
+          { puccValidUpto: { lte: soon } },
+        ],
+      },
+      select: {
+        id: true,
+        registrationNumber: true,
+        insuranceExpiry: true,
+        fitnessExpiry: true,
+        taxValidUpto: true,
+        permitValidUpto: true,
+        puccValidUpto: true,
+      },
+    });
+
+    const alerts = [];
+    const docState = (d: Date | null) => {
+      if (!d) return null;
+      const dt = new Date(d);
+      if (dt < now) return "expired" as const;
+      if (dt <= soon) return "soon" as const;
+      return null;
+    };
+
+    for (const v of vehicles) {
+      const checks = [
+        { label: "Insurance", date: v.insuranceExpiry },
+        { label: "Fitness", date: v.fitnessExpiry },
+        { label: "Road Tax", date: v.taxValidUpto },
+        { label: "Permit", date: v.permitValidUpto },
+        { label: "PUCC (Pollution)", date: v.puccValidUpto },
+      ];
+      for (const check of checks) {
+        const state = docState(check.date);
+        if (state) {
+          alerts.push({
+            vehicleId: v.id,
+            regNumber: v.registrationNumber,
+            docType: check.label,
+            date: check.date!,
+            status: state,
+          });
+        }
+      }
+    }
+
+    alerts.sort((a, b) => {
+      if (a.status === "expired" && b.status !== "expired") return -1;
+      if (a.status !== "expired" && b.status === "expired") return 1;
+      return a.date.getTime() - b.date.getTime();
+    });
+
+    return alerts;
+  } catch {
+    return [];
+  }
+}
+
 export default async function DashboardPage() {
-  const s = await getStats();
+  const [s, alerts] = await Promise.all([getStats(), getExpiryAlerts()]);
 
   const kpis: {
     label: string;
@@ -149,6 +218,57 @@ export default async function DashboardPage() {
             npm run db:push
           </code>{" "}
           to create it, then refresh.
+        </div>
+      )}
+
+      {/* Expiry Alerts Warning */}
+      {alerts.length > 0 && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xl">⚠️</span>
+            <h3 className="text-sm font-bold text-red-950 uppercase tracking-wider">
+              Document Expiry Alerts
+            </h3>
+            <span className="ml-auto rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-bold text-red-700">
+              {alerts.length} warning{alerts.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {alerts.slice(0, 6).map((a, idx) => (
+              <Link
+                key={`${a.vehicleId}-${a.docType}-${idx}`}
+                href={`/vehicles/${a.vehicleId}`}
+                className="flex items-center justify-between rounded-xl bg-white border border-red-100 p-3 hover:shadow-md transition-all"
+              >
+                <div>
+                  <p className="font-bold text-gray-800 text-sm">{a.regNumber}</p>
+                  <p className="text-xs text-gray-500">{a.docType}</p>
+                </div>
+                <div className="text-right">
+                  <span className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                    a.status === "expired"
+                      ? "bg-red-100 text-red-700 animate-pulse"
+                      : "bg-amber-100 text-amber-700"
+                  }`}>
+                    {a.status === "expired" ? "Expired" : "Expiring Soon"}
+                  </span>
+                  <p className="text-[10px] font-semibold text-gray-400 mt-1">
+                    {formatDate(a.date)}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+          {alerts.length > 6 && (
+            <div className="mt-3 text-right">
+              <Link
+                href="/vehicles"
+                className="text-xs font-bold text-red-700 hover:underline"
+              >
+                View all vehicles in fleet →
+              </Link>
+            </div>
+          )}
         </div>
       )}
 

@@ -86,11 +86,11 @@ export default async function VehicleDetailPage({
     { label: "Owner Name", value: vehicle.ownerName || "—" },
     { label: "Registering Authority", value: vehicle.registeringAuthority || "—" },
     { label: "Vehicle Class", value: vehicle.vehicleClass || "—" },
-    { label: "Fuel Type", value: vehicle.fuelType || "—" },
     { label: "Emission Norm", value: vehicle.emissionNorm || "—" },
     { label: "Vehicle Age", value: vehicleAge(vehicle.registrationDate) },
     { label: "Hypothecated", value: vehicle.hypothecated ? "Yes" : "No" },
     { label: "RC Status", value: vehicle.vehicleStatus || "—" },
+    { label: "Area / Region", value: vehicle.area || "—" },
     { label: "Fleet Status", value: vehicle.isActive ? "Active" : "Inactive" },
   ];
 

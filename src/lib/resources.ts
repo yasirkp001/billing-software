@@ -42,6 +42,7 @@ export const vehicleResource: Resource = {
     { name: "permitValidUpto", type: "date" },
     { name: "puccValidUpto", type: "date" },
     { name: "isActive", type: "boolean" },
+    { name: "area", type: "string" },
     { name: "notes", type: "string" },
   ],
 };

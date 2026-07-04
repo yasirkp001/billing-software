@@ -14,14 +14,6 @@ const TYPE_OPTIONS = [
   { value: "other", label: "Other" },
 ];
 
-const FUEL_OPTIONS = [
-  { value: "petrol", label: "Petrol" },
-  { value: "diesel", label: "Diesel" },
-  { value: "cng", label: "CNG" },
-  { value: "electric", label: "Electric" },
-  { value: "other", label: "Other" },
-];
-
 const RC_STATUS_OPTIONS = [
   { value: "active", label: "Active" },
   { value: "blacklisted", label: "Blacklisted" },
@@ -63,6 +55,7 @@ const columns: Column<Row>[] = [
       <span className="capitalize">{String(r.ownership ?? "own")}</span>
     ),
   },
+  { key: "area", label: "Area", render: (r) => String(r.area || "—") },
   { key: "insuranceExpiry", label: "Insurance", render: (r) => fmtDate(r.insuranceExpiry) },
   {
     key: "invoiceBills",
@@ -114,7 +107,6 @@ const fields: FormField[] = [
   { name: "ownerName", label: "Owner Name", type: "text" },
   { name: "registeringAuthority", label: "Registering Authority (RTO)", type: "text" },
   { name: "vehicleClass", label: "Vehicle Class", type: "text", placeholder: "Goods Carrier (HGV)" },
-  { name: "fuelType", label: "Fuel Type", type: "select", options: FUEL_OPTIONS },
   { name: "emissionNorm", label: "Emission Norm", type: "text", placeholder: "BS6" },
   { name: "vehicleStatus", label: "RC Status", type: "select", options: RC_STATUS_OPTIONS, defaultValue: "active" },
   { name: "hypothecated", label: "Hypothecated", type: "checkbox" },
@@ -125,6 +117,7 @@ const fields: FormField[] = [
   { name: "permitValidUpto", label: "Permit Valid Upto", type: "date" },
   { name: "puccValidUpto", label: "PUCC Valid Upto", type: "date" },
   { name: "notes", label: "Notes", type: "textarea", span: 2 },
+  { name: "area", label: "Area / Region", type: "text", placeholder: "e.g. Kozhikode, Kannur…", span: 2 },
   { name: "isActive", label: "Active", type: "checkbox", defaultValue: true, span: 2 },
 ];
 
