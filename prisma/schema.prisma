@@ -1,0 +1,199 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("staff") // "admin" | "staff"
+  image        String?  // profile photo as a base64 data URL (null = none)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Customer {
+  id             String      @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  contactPerson  String      @default("")
+  phone          String
+  email          String      @default("")
+  address        String      @default("")
+  gstNumber      String      @default("")
+  openingBalance Float        @default(0)
+  notes          String      @default("")
+  isActive       Boolean     @default(true)
+  bookings       Booking[]
+  invoices       Invoice[]
+  payments       Payment[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model Vehicle {
+  id                   String      @id @default(auto()) @map("_id") @db.ObjectId
+  registrationNumber   String      @unique
+  type                 String      @default("truck") // truck|lorry|tipper|trailer|crane|excavator|other
+  make                 String      @default("")
+  model                String      @default("")
+  capacityTons         Float       @default(0)
+  purchasePrice        Float       @default(0)
+  ownership            String      @default("own") // own | hired
+  ownerName            String      @default("")
+  registeringAuthority String      @default("")
+  vehicleClass         String      @default("")
+  fuelType             String      @default("") // petrol|diesel|cng|electric|other
+  emissionNorm         String      @default("")
+  hypothecated         Boolean     @default(false)
+  vehicleStatus        String      @default("active") // RTO/RC status: active|blacklisted|scrapped|other
+  registrationDate     DateTime?
+  insuranceExpiry      DateTime?
+  fitnessExpiry        DateTime?
+  taxValidUpto         DateTime?
+  permitValidUpto      DateTime?
+  puccValidUpto        DateTime?
+  isActive             Boolean     @default(true)
+  notes                String      @default("")
+  bookings             Booking[]
+  invoices             Invoice[]
+  lineItems            InvoiceLineItem[]
+  expenses             VehicleExpense[]
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+}
+
+model VehicleExpense {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  vehicleId   String   @db.ObjectId
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  date        DateTime @default(now())
+  category    String   @default("other") // liability|maintenance|insurance|fuel|tax|other
+  amount      Float    @default(0)
+  note        String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Driver {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  phone         String
+  licenseNumber String    @default("")
+  licenseExpiry DateTime?
+  address       String    @default("")
+  salary        Float     @default(0)
+  isActive      Boolean   @default(true)
+  notes         String    @default("")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  bookings      Booking[]
+  tripSheets    TripSheet[]
+  invoices      Invoice[]
+}
+
+model Booking {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  customerId      String?     @db.ObjectId
+  customer        Customer?   @relation(fields: [customerId], references: [id])
+  vehicleId       String      @db.ObjectId
+  vehicle         Vehicle     @relation(fields: [vehicleId], references: [id])
+  driverId        String      @db.ObjectId
+  driver          Driver      @relation(fields: [driverId], references: [id])
+  pickupLocation  String
+  dropLocation    String
+  pickupDate      DateTime
+  dropDate        DateTime
+  ratePerDay      Float
+  startKm         Float       @default(0)
+  endKm           Float       @default(0)
+  notes           String      @default("")
+  status          String      @default("pending") // pending|in-progress|completed|cancelled
+  tripSheets      TripSheet[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model TripSheet {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  bookingId       String      @db.ObjectId
+  booking         Booking     @relation(fields: [bookingId], references: [id])
+  driverId        String      @db.ObjectId
+  driver          Driver      @relation(fields: [driverId], references: [id])
+  startDate       DateTime
+  endDate         DateTime
+  distance        Float       @default(0) // in km
+  dieselUsed      Float       @default(0) // in liters
+  dieselCost      Float       @default(0)
+  toll            Float       @default(0)
+  otherExpenses   Float       @default(0)
+  remarks         String      @default("")
+  status          String      @default("pending") // pending|invoiced|paid
+  invoices        Invoice[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Invoice {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  customerId      String?         @db.ObjectId
+  customer        Customer?       @relation(fields: [customerId], references: [id])
+  tripSheetId     String?         @db.ObjectId
+  tripSheet       TripSheet?      @relation(fields: [tripSheetId], references: [id])
+  vehicleId       String?         @db.ObjectId
+  vehicle         Vehicle?        @relation(fields: [vehicleId], references: [id])
+  driverId        String?         @db.ObjectId
+  driver          Driver?         @relation(fields: [driverId], references: [id])
+  invoiceDate     DateTime
+  invoiceNumber   String          @unique
+  subtotal        Float
+  gstPercentage   Float           @default(18)
+  gstAmount       Float
+  totalAmount     Float
+  paidAmount      Float           @default(0)
+  status          String          @default("draft") // draft|sent|paid|overdue
+  notes           String          @default("")
+  lineItems       InvoiceLineItem[]
+  payments        Payment[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model Payment {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  invoiceId   String?   @db.ObjectId
+  invoice     Invoice?  @relation(fields: [invoiceId], references: [id])
+  customerId  String?   @db.ObjectId
+  customer    Customer? @relation(fields: [customerId], references: [id])
+  amount      Float
+  paymentDate DateTime  @default(now())
+  method      String    @default("cash") // cash|bank|upi|cheque|other
+  reference   String    @default("")
+  notes       String    @default("")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model InvoiceLineItem {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  invoiceId       String    @db.ObjectId
+  invoice         Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  vehicleId       String?   @db.ObjectId
+  vehicle         Vehicle?  @relation(fields: [vehicleId], references: [id])
+  description     String
+  quantity        Float     @default(1)
+  rate            Float
+  amount          Float
+  startKm         Float     @default(0)
+  endKm           Float     @default(0)
+  km              Float     @default(0) // distance = endKm - startKm
+  status          String    @default("pending") // pending|running|completed
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}

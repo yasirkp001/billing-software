@@ -1,0 +1,211 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* ── Neutral palette ──
+     Kept under the `wood-*` names so every existing component stays in sync.
+     White / gray chrome — only buttons carry the red accent.
+     Values are the standard Tailwind `gray` scale. */
+  --color-wood-50: #f9fafb;
+  --color-wood-100: #f3f4f6;
+  --color-wood-200: #e5e7eb;
+  --color-wood-300: #d1d5db;
+  --color-wood-400: #9ca3af;
+  --color-wood-500: #6b7280;
+  --color-wood-600: #4b5563;
+  --color-wood-700: #374151;
+  --color-wood-800: #1f2937;
+  --color-wood-900: #111827;
+  --color-wood-950: #030712;
+
+  /* Status colors */
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-200: #bbf7d0;
+  --color-success-300: #86efac;
+  --color-success-400: #4ade80;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-800: #166534;
+  --color-success-900: #145231;
+
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-200: #fecaca;
+  --color-danger-300: #fca5a5;
+  --color-danger-400: #f87171;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-danger-800: #991b1b;
+  --color-danger-900: #7f1d1d;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #1f2937;
+}
+
+html,
+body {
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Base text size site-wide */
+  font-size: 16px;
+}
+
+/* Clean type scale — regular body text, weight reserved for real hierarchy.
+   Tailwind's font-* utilities (medium/semibold/bold/extrabold) now render at
+   their true weights instead of everything being forced bold. */
+body {
+  font-weight: 400;
+}
+
+/* Sensible defaults (no !important) so utility classes can still override. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+}
+
+strong,
+b {
+  font-weight: 600;
+}
+
+/* Thin scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #f5a3a3 transparent;
+}
+
+/* Toast notification slide-in */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.toast-enter {
+  animation: toast-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Notification panel open */
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.panel-in {
+  animation: panel-in 0.18s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transform-origin: top right;
+}
+
+/* Notification item staggered entrance */
+@keyframes item-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.item-in {
+  opacity: 0;
+  animation: item-in 0.28s ease forwards;
+}
+
+/* Bell badge attention pulse (ring) */
+@keyframes badge-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(220, 38, 38, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+}
+.badge-pulse {
+  animation: badge-pulse 2.2s ease-out infinite;
+}
+
+/* Soft bell wiggle when alerts are present */
+@keyframes bell-wiggle {
+  0%, 92%, 100% { transform: rotate(0); }
+  94% { transform: rotate(-9deg); }
+  96% { transform: rotate(8deg); }
+  98% { transform: rotate(-5deg); }
+}
+.bell-wiggle {
+  animation: bell-wiggle 4s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+/* Print utilities */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  /* Force the invoice onto a single A4 page */
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  #invoice-sheet {
+    max-width: 100% !important;
+    padding: 0 !important;
+    font-size: 10.5px !important;
+    line-height: 1.3 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Compress the generous screen spacing so everything fits on one page */
+  #invoice-sheet .py-8 { padding-top: 0.6rem !important; padding-bottom: 0.6rem !important; }
+  #invoice-sheet .pb-8 { padding-bottom: 0.6rem !important; }
+  #invoice-sheet .pt-8 { padding-top: 0.6rem !important; }
+  #invoice-sheet .pt-3 { padding-top: 0.4rem !important; }
+  #invoice-sheet .py-3\.5 { padding-top: 0.3rem !important; padding-bottom: 0.3rem !important; }
+  #invoice-sheet .mt-16 { margin-top: 0.75rem !important; }
+  #invoice-sheet .mt-3 { margin-top: 0.4rem !important; }
+  #invoice-sheet .mb-8 { margin-bottom: 0.4rem !important; }
+  #invoice-sheet .mb-4 { margin-bottom: 0.3rem !important; }
+  #invoice-sheet .mb-3 { margin-bottom: 0.25rem !important; }
+  #invoice-sheet .gap-8 { gap: 0.75rem !important; }
+  #invoice-sheet .gap-6 { gap: 0.6rem !important; }
+  #invoice-sheet .space-y-3 > * + * { margin-top: 0.3rem !important; }
+
+  /* Keep headings from ballooning the height */
+  #invoice-sheet .text-3xl { font-size: 1.5rem !important; }
+  #invoice-sheet .text-xl { font-size: 1rem !important; }
+  #invoice-sheet .text-lg { font-size: 0.95rem !important; }
+
+  /* Tables: keep columns stable and never split a row across pages */
+  #invoice-sheet table { width: 100% !important; table-layout: fixed; }
+  #invoice-sheet thead { display: table-header-group; }
+  #invoice-sheet tr { break-inside: avoid; page-break-inside: avoid; }
+  #invoice-sheet td,
+  #invoice-sheet th { font-size: 10px !important; }
+}

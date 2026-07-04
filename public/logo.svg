@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 220" role="img" aria-label="Hi Wood Transporting">
+  <title>Hi Wood Transporting</title>
+  <!-- Red "Hi" monogram -->
+  <g>
+    <!-- left bar -->
+    <polygon points="40,40 80,40 80,180 40,180" fill="#E2231A"/>
+    <!-- darker facet on left bar (wood split) -->
+    <polygon points="40,180 80,180 80,128 40,150" fill="#B5160F"/>
+    <!-- right bar (doubles as the i stem) -->
+    <polygon points="130,40 170,40 170,180 130,180" fill="#E2231A"/>
+    <!-- darker facet on right bar -->
+    <polygon points="130,40 170,40 170,92 130,70" fill="#B5160F"/>
+    <!-- crossbar -->
+    <polygon points="80,92 130,92 130,126 80,126" fill="#E2231A"/>
+    <!-- i dot -->
+    <rect x="130" y="12" width="40" height="20" rx="2" fill="#E2231A"/>
+  </g>
+  <!-- Wordmark -->
+  <text x="208" y="122" font-family="'Arial Black','Helvetica Neue',Helvetica,Arial,sans-serif" font-weight="900" font-size="88" letter-spacing="-2" fill="#171717">HI WOOD</text>
+  <text x="336" y="192" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-weight="700" font-size="62" letter-spacing="0" fill="#171717">Transporting</text>
+</svg>
