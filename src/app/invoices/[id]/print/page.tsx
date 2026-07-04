@@ -33,6 +33,7 @@ interface LineItem {
 
 interface InvoiceData {
   id: string;
+  vehicleId?: string | null;
   invoiceNumber: string;
   invoiceDate: string;
   subtotal: number;
@@ -71,6 +72,14 @@ interface InvoiceData {
   } | null;
 }
 
+interface VehicleExpense {
+  id: string;
+  category: string;
+  amount: number;
+  date: string;
+  note: string;
+}
+
 const fmt = (n: number) =>
   "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -102,13 +111,28 @@ const vehicleInfo = (vehicle?: VehicleDetails | null) =>
 export default function PrintInvoicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [invoice, setInvoice] = useState<InvoiceData | null>(null);
+  const [expenses, setExpenses] = useState<VehicleExpense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     fetch(`/api/invoices/${id}`)
       .then((r) => r.json())
-      .then((b) => { if (b.data) setInvoice(b.data); else setError(b.error || "Not found"); })
+      .then((b) => {
+        if (b.data) {
+          setInvoice(b.data);
+          // Fetch vehicle expenses if a vehicle is linked
+          const vid = b.data.vehicleId;
+          if (vid) {
+            fetch(`/api/vehicles/${vid}/expenses`)
+              .then((r) => r.json())
+              .then((eb) => { if (eb.data) setExpenses(eb.data); })
+              .catch(() => {});
+          }
+        } else {
+          setError(b.error || "Not found");
+        }
+      })
       .catch(() => setError("Failed to load"))
       .finally(() => setLoading(false));
   }, [id]);
@@ -141,6 +165,12 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
   const hasServiceDetails = !!(invoice.vehicle?.registrationNumber || driverName || invoice.tripSheet);
   const hasLineItems = !!(invoice.lineItems && invoice.lineItems.length > 0);
   const showSubtotal = invoice.subtotal !== invoice.totalAmount;
+
+  // Vehicle expense totals by category
+  const dieselTotal = expenses.filter((e) => e.category === "diesel").reduce((s, e) => s + e.amount, 0);
+  const fastagTotal = expenses.filter((e) => e.category === "fasttag").reduce((s, e) => s + e.amount, 0);
+  const policeTotal = expenses.filter((e) => e.category === "police").reduce((s, e) => s + e.amount, 0);
+  const hasVehicleExpenses = dieselTotal > 0 || fastagTotal > 0 || policeTotal > 0;
 
   const statusStyles: Record<string, string> = {
     paid: "bg-green-100 text-green-800 border border-green-200",
@@ -428,6 +458,54 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
               </table>
             )}
           </div>
+
+          {/* ── VEHICLE EXPENSES (Diesel / FASTag / Police) ── */}
+          {hasVehicleExpenses && (
+            <>
+              <div className="my-6 border-t border-gray-200" />
+              <div>
+                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  Vehicle Expenses
+                </p>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b-2 border-gray-200 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                      <th className="pb-2.5 text-left">Expense</th>
+                      <th className="pb-2.5 text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dieselTotal > 0 && (
+                      <tr className="border-b border-gray-100">
+                        <td className="py-3 pr-3 font-medium text-gray-800">Diesel</td>
+                        <td className="py-3 text-right font-mono tabular-nums font-semibold text-gray-900">{fmt(dieselTotal)}</td>
+                      </tr>
+                    )}
+                    {fastagTotal > 0 && (
+                      <tr className="border-b border-gray-100">
+                        <td className="py-3 pr-3 font-medium text-gray-800">FASTag</td>
+                        <td className="py-3 text-right font-mono tabular-nums font-semibold text-gray-900">{fmt(fastagTotal)}</td>
+                      </tr>
+                    )}
+                    {policeTotal > 0 && (
+                      <tr className="border-b border-gray-100">
+                        <td className="py-3 pr-3 font-medium text-gray-800">Police</td>
+                        <td className="py-3 text-right font-mono tabular-nums font-semibold text-gray-900">{fmt(policeTotal)}</td>
+                      </tr>
+                    )}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-gray-200">
+                      <td className="py-2.5 pr-3 text-xs font-bold uppercase tracking-wider text-gray-500">Total Vehicle Expenses</td>
+                      <td className="py-2.5 text-right font-mono tabular-nums font-extrabold text-gray-900">
+                        {fmt(dieselTotal + fastagTotal + policeTotal)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </>
+          )}
 
           {/* ── TOTALS ── */}
           <div className="mt-6 flex justify-end">
