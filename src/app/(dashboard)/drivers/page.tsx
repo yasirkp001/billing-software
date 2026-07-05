@@ -57,5 +57,4 @@ export default function DriversPage() {
       fields={fields}
       searchPlaceholder="Search by name, phone, license…"
     />
-  );
-}
+  );}
