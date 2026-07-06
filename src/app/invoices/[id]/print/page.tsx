@@ -360,21 +360,21 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
               <SectionHead title="Vehicle Expenses" />
               <div className="grid grid-cols-3 gap-3 mb-2">
                 {dieselTotal > 0 && (
-                  <div className="rounded-lg border border-gray-200 bg-white px-3 py-2.5">
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Diesel</p>
-                    <p className="mt-0.5 text-sm font-extrabold text-gray-800">{fmt(dieselTotal)}</p>
+                  <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:'8px',padding:'10px 12px'}}>
+                    <p style={{fontSize:'9px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.08em',color:'#9ca3af',margin:0}}>Diesel</p>
+                    <p style={{fontSize:'14px',fontWeight:800,color:'#111827',margin:'2px 0 0'}}>{fmt(dieselTotal)}</p>
                   </div>
                 )}
                 {fastagTotal > 0 && (
-                  <div className="rounded-lg border border-gray-200 bg-white px-3 py-2.5">
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400">FASTag</p>
-                    <p className="mt-0.5 text-sm font-extrabold text-gray-800">{fmt(fastagTotal)}</p>
+                  <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:'8px',padding:'10px 12px'}}>
+                    <p style={{fontSize:'9px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.08em',color:'#9ca3af',margin:0}}>FASTag</p>
+                    <p style={{fontSize:'14px',fontWeight:800,color:'#111827',margin:'2px 0 0'}}>{fmt(fastagTotal)}</p>
                   </div>
                 )}
                 {policeTotal > 0 && (
-                  <div className="rounded-lg border border-gray-200 bg-white px-3 py-2.5">
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Police</p>
-                    <p className="mt-0.5 text-sm font-extrabold text-gray-800">{fmt(policeTotal)}</p>
+                  <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:'8px',padding:'10px 12px'}}>
+                    <p style={{fontSize:'9px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.08em',color:'#9ca3af',margin:0}}>Police</p>
+                    <p style={{fontSize:'14px',fontWeight:800,color:'#111827',margin:'2px 0 0'}}>{fmt(policeTotal)}</p>
                   </div>
                 )}
               </div>
