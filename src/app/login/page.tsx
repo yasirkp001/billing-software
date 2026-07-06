@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Field";
@@ -12,6 +12,12 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Pre-warm the login API on page load so the serverless function is already
+  // running by the time the user clicks Sign in — eliminates cold-start delay.
+  useEffect(() => {
+    fetch("/api/auth/me").catch(() => {});
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -88,7 +94,12 @@ function LoginForm() {
             />
           </Field>
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Signing in…" : "Sign in"}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Signing in…
+              </span>
+            ) : "Sign in"}
           </Button>
         </form>
 
