@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 
 interface VehicleDetails {
+  id?: string;
   registrationNumber: string;
   type?: string | null;
   make?: string | null;
@@ -32,11 +33,12 @@ interface LineItem {
   quantity: number;
   rate: number;
   amount: number;
+  vehicleId?: string | null;
   startKm: number;
   endKm: number;
   km: number;
   status: string;
-  vehicle?: VehicleDetails | null;
+  vehicle?: VehicleDetails & { id?: string } | null;
 }
 
 interface InvoiceData {
@@ -129,10 +131,14 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
       .then((b) => {
         if (b.data) {
           setInvoice(b.data);
-          // Fetch vehicle expenses — use top-level vehicleId or first line-item vehicleId
-          const vid = b.data.vehicleId
-            || b.data.vehicle?.id
-            || b.data.lineItems?.[0]?.vehicleId;
+          // Fetch vehicle expenses — try all possible vehicle ID sources
+          const vid =
+            b.data.vehicleId ||
+            b.data.vehicle?.id ||
+            b.data.lineItems?.find((li: { vehicleId?: string; vehicle?: { id?: string } }) =>
+              li.vehicleId || li.vehicle?.id
+            )?.vehicleId ||
+            b.data.lineItems?.find((li: { vehicle?: { id?: string } }) => li.vehicle?.id)?.vehicle?.id;
           if (vid) {
             fetch(`/api/vehicles/${vid}/expenses`)
               .then((r) => r.json())
