@@ -405,6 +405,29 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
                             </span>
                           </td>
                         </tr>
+                        {(dieselTotal > 0 || fastagTotal > 0 || policeTotal > 0) && (
+                          <tr className="bg-purple-50">
+                            <td colSpan={4} className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                              Vehicle Expenses
+                            </td>
+                          </tr>
+                        )}
+                        {dieselTotal > 0 && (
+                          <tr>
+                            <td className="px-3 py-2 font-semibold text-gray-500">Diesel</td>
+                            <td className="px-3 py-2 font-semibold text-purple-700">{fmt(dieselTotal)}</td>
+                            <td className="px-3 py-2 font-semibold text-gray-500">FASTag</td>
+                            <td className="px-3 py-2 font-semibold text-cyan-700">{fastagTotal > 0 ? fmt(fastagTotal) : "—"}</td>
+                          </tr>
+                        )}
+                        {policeTotal > 0 && (
+                          <tr className="bg-gray-50">
+                            <td className="px-3 py-2 font-semibold text-gray-500">Police</td>
+                            <td className="px-3 py-2 font-semibold text-orange-700">{fmt(policeTotal)}</td>
+                            <td className="px-3 py-2 font-semibold text-gray-500">Total Expenses</td>
+                            <td className="px-3 py-2 font-extrabold text-gray-900">{fmt(dieselTotal + fastagTotal + policeTotal)}</td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
