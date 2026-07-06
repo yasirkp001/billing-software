@@ -360,21 +360,21 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
               <SectionHead title="Vehicle Expenses" />
               <div className="grid grid-cols-3 gap-3 mb-2">
                 {dieselTotal > 0 && (
-                  <div className="rounded-lg border border-purple-100 bg-purple-50 px-3 py-2.5">
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-purple-400">Diesel</p>
-                    <p className="mt-0.5 text-sm font-extrabold text-purple-700">{fmt(dieselTotal)}</p>
+                  <div className="rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Diesel</p>
+                    <p className="mt-0.5 text-sm font-extrabold text-gray-800">{fmt(dieselTotal)}</p>
                   </div>
                 )}
                 {fastagTotal > 0 && (
-                  <div className="rounded-lg border border-cyan-100 bg-cyan-50 px-3 py-2.5">
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-cyan-400">FASTag</p>
-                    <p className="mt-0.5 text-sm font-extrabold text-cyan-700">{fmt(fastagTotal)}</p>
+                  <div className="rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400">FASTag</p>
+                    <p className="mt-0.5 text-sm font-extrabold text-gray-800">{fmt(fastagTotal)}</p>
                   </div>
                 )}
                 {policeTotal > 0 && (
-                  <div className="rounded-lg border border-orange-100 bg-orange-50 px-3 py-2.5">
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-orange-400">Police</p>
-                    <p className="mt-0.5 text-sm font-extrabold text-orange-700">{fmt(policeTotal)}</p>
+                  <div className="rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Police</p>
+                    <p className="mt-0.5 text-sm font-extrabold text-gray-800">{fmt(policeTotal)}</p>
                   </div>
                 )}
               </div>
