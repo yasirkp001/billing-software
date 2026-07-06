@@ -19,8 +19,8 @@ export function AppShell({
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Topbar user={user} onMenu={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
-        <footer className="sticky bottom-0 z-10 shrink-0 border-t border-wood-100 bg-white">
+        <main className="flex-1 overflow-y-auto p-4 pb-24 lg:p-6 lg:pb-24">{children}</main>
+        <footer className="fixed bottom-0 left-0 right-0 z-10 shrink-0 border-t border-wood-100 bg-white lg:left-64">
           <div className="px-4 py-5 lg:px-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               {/* Left: brand */}
