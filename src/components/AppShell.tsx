@@ -20,7 +20,7 @@ export function AppShell({
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Topbar user={user} onMenu={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
-        <footer className="shrink-0 border-t border-wood-100 bg-white">
+        <footer className="sticky bottom-0 z-10 shrink-0 border-t border-wood-100 bg-white">
           <div className="px-4 py-5 lg:px-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               {/* Left: brand */}
