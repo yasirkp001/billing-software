@@ -16,6 +16,14 @@ interface VehicleDetails {
   insuranceExpiry?: string | null;
   fitnessExpiry?: string | null;
   permitValidUpto?: string | null;
+  taxValidUpto?: string | null;
+  puccValidUpto?: string | null;
+  registrationDate?: string | null;
+  emissionNorm?: string | null;
+  vehicleClass?: string | null;
+  registeringAuthority?: string | null;
+  hypothecated?: boolean | null;
+  area?: string | null;
   isActive?: boolean | null;
 }
 
@@ -305,25 +313,7 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
             <>
               <div>
                 <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-gray-400">Service Details</p>
-                <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm sm:grid-cols-3">
-                  {invoice.vehicle?.registrationNumber && (
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Vehicle</p>
-                      <p className="mt-0.5 font-bold text-gray-800">{invoice.vehicle.registrationNumber}</p>
-                      {vehicleSummary(invoice.vehicle) && (
-                        <p className="text-xs text-gray-500">{vehicleSummary(invoice.vehicle)}</p>
-                      )}
-                      {vehicleInfo(invoice.vehicle).length > 0 && (
-                        <div className="mt-1 space-y-0.5 text-xs text-gray-500">
-                          {vehicleInfo(invoice.vehicle).map((item) => (
-                            <p key={item.label}>
-                              <span className="font-semibold text-gray-600">{item.label}:</span> {item.value}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
                   {driverName && (
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Driver</p>
@@ -343,6 +333,83 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
                   )}
                 </div>
               </div>
+
+              {/* ── VEHICLE DETAILS full table ── */}
+              {invoice.vehicle?.registrationNumber && (
+                <div className="mt-5">
+                  <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-gray-400">Vehicle Details</p>
+                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                    <table className="w-full text-xs">
+                      <tbody className="divide-y divide-gray-100">
+                        <tr className="bg-gray-50">
+                          <td className="px-3 py-2 font-semibold text-gray-500 w-1/3">Registration No.</td>
+                          <td className="px-3 py-2 font-bold text-gray-900">{invoice.vehicle.registrationNumber}</td>
+                          <td className="px-3 py-2 font-semibold text-gray-500 w-1/3">Type</td>
+                          <td className="px-3 py-2 font-semibold text-gray-700 uppercase">{invoice.vehicle.type || "—"}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-3 py-2 font-semibold text-gray-500">Brand</td>
+                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.make || "—"}</td>
+                          <td className="px-3 py-2 font-semibold text-gray-500">Model</td>
+                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.model || "—"}</td>
+                        </tr>
+                        <tr className="bg-gray-50">
+                          <td className="px-3 py-2 font-semibold text-gray-500">Capacity</td>
+                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.capacityTons ? `${invoice.vehicle.capacityTons} T` : "—"}</td>
+                          <td className="px-3 py-2 font-semibold text-gray-500">Vehicle Class</td>
+                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.vehicleClass || "—"}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-3 py-2 font-semibold text-gray-500">Ownership</td>
+                          <td className="px-3 py-2 text-gray-700 capitalize">{invoice.vehicle.ownership || "—"}</td>
+                          <td className="px-3 py-2 font-semibold text-gray-500">Owner Name</td>
+                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.ownerName || "—"}</td>
+                        </tr>
+                        <tr className="bg-gray-50">
+                          <td className="px-3 py-2 font-semibold text-gray-500">Area / Region</td>
+                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.area || "—"}</td>
+                          <td className="px-3 py-2 font-semibold text-gray-500">Registering Auth.</td>
+                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.registeringAuthority || "—"}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-3 py-2 font-semibold text-gray-500">Emission Norm</td>
+                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.emissionNorm || "—"}</td>
+                          <td className="px-3 py-2 font-semibold text-gray-500">RC Status</td>
+                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.vehicleStatus || "—"}</td>
+                        </tr>
+                        <tr className="bg-gray-50">
+                          <td className="px-3 py-2 font-semibold text-gray-500">Hypothecated</td>
+                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.hypothecated ? "Yes" : "No"}</td>
+                          <td className="px-3 py-2 font-semibold text-gray-500">Reg. Date</td>
+                          <td className="px-3 py-2 text-gray-700">{fmtDate(invoice.vehicle.registrationDate)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-3 py-2 font-semibold text-gray-500">Insurance Expiry</td>
+                          <td className="px-3 py-2 text-gray-700">{fmtDate(invoice.vehicle.insuranceExpiry)}</td>
+                          <td className="px-3 py-2 font-semibold text-gray-500">Fitness Expiry</td>
+                          <td className="px-3 py-2 text-gray-700">{fmtDate(invoice.vehicle.fitnessExpiry)}</td>
+                        </tr>
+                        <tr className="bg-gray-50">
+                          <td className="px-3 py-2 font-semibold text-gray-500">Tax Valid Upto</td>
+                          <td className="px-3 py-2 text-gray-700">{fmtDate(invoice.vehicle.taxValidUpto)}</td>
+                          <td className="px-3 py-2 font-semibold text-gray-500">Permit Valid Upto</td>
+                          <td className="px-3 py-2 text-gray-700">{fmtDate(invoice.vehicle.permitValidUpto)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-3 py-2 font-semibold text-gray-500">PUCC Valid Upto</td>
+                          <td className="px-3 py-2 text-gray-700">{fmtDate(invoice.vehicle.puccValidUpto)}</td>
+                          <td className="px-3 py-2 font-semibold text-gray-500">Status</td>
+                          <td className="px-3 py-2">
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${invoice.vehicle.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                              {invoice.vehicle.isActive ? "Active" : "Inactive"}
+                            </span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
               <div className="my-6 border-t border-gray-200" />
             </>
           )}
