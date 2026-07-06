@@ -129,8 +129,10 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
       .then((b) => {
         if (b.data) {
           setInvoice(b.data);
-          // Fetch vehicle expenses if a vehicle is linked
-          const vid = b.data.vehicleId;
+          // Fetch vehicle expenses — use top-level vehicleId or first line-item vehicleId
+          const vid = b.data.vehicleId
+            || b.data.vehicle?.id
+            || b.data.lineItems?.[0]?.vehicleId;
           if (vid) {
             fetch(`/api/vehicles/${vid}/expenses`)
               .then((r) => r.json())
@@ -170,7 +172,9 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
 
   const balance = invoice.totalAmount - (invoice.paidAmount || 0);
   const driverName = invoice.driver?.name || invoice.tripSheet?.driver?.name;
-  const hasServiceDetails = !!(invoice.vehicle?.registrationNumber || driverName || invoice.tripSheet);
+  // Use top-level vehicle or fall back to first line item's vehicle
+  const primaryVehicle = invoice.vehicle ?? invoice.lineItems?.find((li) => li.vehicle)?.vehicle ?? null;
+  const hasServiceDetails = !!(primaryVehicle?.registrationNumber || driverName || invoice.tripSheet);
   const hasLineItems = !!(invoice.lineItems && invoice.lineItems.length > 0);
   const showSubtotal = invoice.subtotal !== invoice.totalAmount;
 
@@ -335,7 +339,7 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
               </div>
 
               {/* ── VEHICLE DETAILS full table ── */}
-              {invoice.vehicle?.registrationNumber && (
+              {primaryVehicle?.registrationNumber && (
                 <div className="mt-5">
                   <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-gray-400">Vehicle Details</p>
                   <div className="rounded-lg border border-gray-200 overflow-hidden">
@@ -343,65 +347,65 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
                       <tbody className="divide-y divide-gray-100">
                         <tr className="bg-gray-50">
                           <td className="px-3 py-2 font-semibold text-gray-500 w-1/3">Registration No.</td>
-                          <td className="px-3 py-2 font-bold text-gray-900">{invoice.vehicle.registrationNumber}</td>
+                          <td className="px-3 py-2 font-bold text-gray-900">{primaryVehicle.registrationNumber}</td>
                           <td className="px-3 py-2 font-semibold text-gray-500 w-1/3">Type</td>
-                          <td className="px-3 py-2 font-semibold text-gray-700 uppercase">{invoice.vehicle.type || "—"}</td>
+                          <td className="px-3 py-2 font-semibold text-gray-700 uppercase">{primaryVehicle.type || "—"}</td>
                         </tr>
                         <tr>
                           <td className="px-3 py-2 font-semibold text-gray-500">Brand</td>
-                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.make || "—"}</td>
+                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.make || "—"}</td>
                           <td className="px-3 py-2 font-semibold text-gray-500">Model</td>
-                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.model || "—"}</td>
+                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.model || "—"}</td>
                         </tr>
                         <tr className="bg-gray-50">
                           <td className="px-3 py-2 font-semibold text-gray-500">Capacity</td>
-                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.capacityTons ? `${invoice.vehicle.capacityTons} T` : "—"}</td>
+                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.capacityTons ? `${primaryVehicle.capacityTons} T` : "—"}</td>
                           <td className="px-3 py-2 font-semibold text-gray-500">Vehicle Class</td>
-                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.vehicleClass || "—"}</td>
+                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.vehicleClass || "—"}</td>
                         </tr>
                         <tr>
                           <td className="px-3 py-2 font-semibold text-gray-500">Ownership</td>
-                          <td className="px-3 py-2 text-gray-700 capitalize">{invoice.vehicle.ownership || "—"}</td>
+                          <td className="px-3 py-2 text-gray-700 capitalize">{primaryVehicle.ownership || "—"}</td>
                           <td className="px-3 py-2 font-semibold text-gray-500">Owner Name</td>
-                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.ownerName || "—"}</td>
+                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.ownerName || "—"}</td>
                         </tr>
                         <tr className="bg-gray-50">
                           <td className="px-3 py-2 font-semibold text-gray-500">Area / Region</td>
-                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.area || "—"}</td>
+                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.area || "—"}</td>
                           <td className="px-3 py-2 font-semibold text-gray-500">Registering Auth.</td>
-                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.registeringAuthority || "—"}</td>
+                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.registeringAuthority || "—"}</td>
                         </tr>
                         <tr>
                           <td className="px-3 py-2 font-semibold text-gray-500">Emission Norm</td>
-                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.emissionNorm || "—"}</td>
+                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.emissionNorm || "—"}</td>
                           <td className="px-3 py-2 font-semibold text-gray-500">RC Status</td>
-                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.vehicleStatus || "—"}</td>
+                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.vehicleStatus || "—"}</td>
                         </tr>
                         <tr className="bg-gray-50">
                           <td className="px-3 py-2 font-semibold text-gray-500">Hypothecated</td>
-                          <td className="px-3 py-2 text-gray-700">{invoice.vehicle.hypothecated ? "Yes" : "No"}</td>
+                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.hypothecated ? "Yes" : "No"}</td>
                           <td className="px-3 py-2 font-semibold text-gray-500">Reg. Date</td>
-                          <td className="px-3 py-2 text-gray-700">{fmtDate(invoice.vehicle.registrationDate)}</td>
+                          <td className="px-3 py-2 text-gray-700">{fmtDate(primaryVehicle.registrationDate)}</td>
                         </tr>
                         <tr>
                           <td className="px-3 py-2 font-semibold text-gray-500">Insurance Expiry</td>
-                          <td className="px-3 py-2 text-gray-700">{fmtDate(invoice.vehicle.insuranceExpiry)}</td>
+                          <td className="px-3 py-2 text-gray-700">{fmtDate(primaryVehicle.insuranceExpiry)}</td>
                           <td className="px-3 py-2 font-semibold text-gray-500">Fitness Expiry</td>
-                          <td className="px-3 py-2 text-gray-700">{fmtDate(invoice.vehicle.fitnessExpiry)}</td>
+                          <td className="px-3 py-2 text-gray-700">{fmtDate(primaryVehicle.fitnessExpiry)}</td>
                         </tr>
                         <tr className="bg-gray-50">
                           <td className="px-3 py-2 font-semibold text-gray-500">Tax Valid Upto</td>
-                          <td className="px-3 py-2 text-gray-700">{fmtDate(invoice.vehicle.taxValidUpto)}</td>
+                          <td className="px-3 py-2 text-gray-700">{fmtDate(primaryVehicle.taxValidUpto)}</td>
                           <td className="px-3 py-2 font-semibold text-gray-500">Permit Valid Upto</td>
-                          <td className="px-3 py-2 text-gray-700">{fmtDate(invoice.vehicle.permitValidUpto)}</td>
+                          <td className="px-3 py-2 text-gray-700">{fmtDate(primaryVehicle.permitValidUpto)}</td>
                         </tr>
                         <tr>
                           <td className="px-3 py-2 font-semibold text-gray-500">PUCC Valid Upto</td>
-                          <td className="px-3 py-2 text-gray-700">{fmtDate(invoice.vehicle.puccValidUpto)}</td>
+                          <td className="px-3 py-2 text-gray-700">{fmtDate(primaryVehicle.puccValidUpto)}</td>
                           <td className="px-3 py-2 font-semibold text-gray-500">Status</td>
                           <td className="px-3 py-2">
-                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${invoice.vehicle.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                              {invoice.vehicle.isActive ? "Active" : "Inactive"}
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${primaryVehicle.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                              {primaryVehicle.isActive ? "Active" : "Inactive"}
                             </span>
                           </td>
                         </tr>
