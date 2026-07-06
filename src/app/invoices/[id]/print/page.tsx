@@ -12,7 +12,6 @@ interface VehicleDetails {
   capacityTons?: number | null;
   ownership?: string | null;
   ownerName?: string | null;
-  fuelType?: string | null;
   vehicleStatus?: string | null;
   insuranceExpiry?: string | null;
   fitnessExpiry?: string | null;
@@ -38,7 +37,7 @@ interface LineItem {
   endKm: number;
   km: number;
   status: string;
-  vehicle?: VehicleDetails & { id?: string } | null;
+  vehicle?: (VehicleDetails & { id?: string }) | null;
 }
 
 interface InvoiceData {
@@ -53,70 +52,46 @@ interface InvoiceData {
   paidAmount: number;
   status: string;
   notes?: string;
-  customer?: {
-    name: string;
-    phone?: string;
-    address?: string;
-    gstNumber?: string;
-  } | null;
+  customer?: { name: string; phone?: string; address?: string; gstNumber?: string } | null;
   vehicle?: VehicleDetails | null;
   driver?: { name: string; phone?: string } | null;
   lineItems?: LineItem[];
   tripSheet?: {
-    id: string;
-    startDate: string;
-    endDate: string;
-    distance: number;
-    dieselCost: number;
-    toll: number;
-    otherExpenses: number;
+    id: string; startDate: string; endDate: string; distance: number;
+    dieselCost: number; toll: number; otherExpenses: number;
     driver?: { name: string; phone: string } | null;
-    booking?: {
-      id: string;
-      pickupLocation: string;
-      dropLocation: string;
-      pickupDate: string;
-      dropDate: string;
-      ratePerDay: number;
-    } | null;
+    booking?: { id: string; pickupLocation: string; dropLocation: string; pickupDate: string; dropDate: string; ratePerDay: number } | null;
   } | null;
 }
 
-interface VehicleExpense {
-  id: string;
-  category: string;
-  amount: number;
-  date: string;
-  note: string;
-}
+interface VehicleExpense { id: string; category: string; amount: number; date: string; note: string; }
 
-const fmt = (n: number) =>
-  "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
+const fmt = (n: number) => "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtDate = (v?: string | null) => {
   if (!v) return "—";
   const d = new Date(v);
-  return Number.isNaN(d.getTime())
-    ? "—"
-    : d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 };
 
-const vehicleSummary = (vehicle?: VehicleDetails | null) =>
-  [
-    [vehicle?.make, vehicle?.model].filter(Boolean).join(" "),
-    vehicle?.type ? vehicle.type.toUpperCase() : "",
-    vehicle?.capacityTons ? `${vehicle.capacityTons} T` : "",
-  ].filter(Boolean).join(" · ");
+// Section header reused across the bill
+function SectionHead({ title }: { title: string }) {
+  return (
+    <div className="mb-3 flex items-center gap-2">
+      <div className="h-3.5 w-1 rounded-full bg-red-600" />
+      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{title}</p>
+    </div>
+  );
+}
 
-const vehicleInfo = (vehicle?: VehicleDetails | null) =>
-  [
-    { label: "Owner", value: vehicle?.ownerName || vehicle?.ownership || "" },
-    { label: "Fuel", value: vehicle?.fuelType || "" },
-    { label: "RC", value: vehicle?.vehicleStatus || "" },
-    { label: "Insurance", value: fmtDate(vehicle?.insuranceExpiry) },
-    { label: "Fitness", value: fmtDate(vehicle?.fitnessExpiry) },
-    { label: "Permit", value: fmtDate(vehicle?.permitValidUpto) },
-  ].filter((item) => item.value && item.value !== "—");
+// Two-column detail grid row
+function DetailRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">{label}</span>
+      <span className={`mt-0.5 text-xs ${bold ? "font-bold text-gray-900" : "text-gray-700"}`}>{value || "—"}</span>
+    </div>
+  );
+}
 
 export default function PrintInvoicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -131,13 +106,9 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
       .then((b) => {
         if (b.data) {
           setInvoice(b.data);
-          // Fetch vehicle expenses — try all possible vehicle ID sources
           const vid =
-            b.data.vehicleId ||
-            b.data.vehicle?.id ||
-            b.data.lineItems?.find((li: { vehicleId?: string; vehicle?: { id?: string } }) =>
-              li.vehicleId || li.vehicle?.id
-            )?.vehicleId ||
+            b.data.vehicleId || b.data.vehicle?.id ||
+            b.data.lineItems?.find((li: { vehicleId?: string; vehicle?: { id?: string } }) => li.vehicleId || li.vehicle?.id)?.vehicleId ||
             b.data.lineItems?.find((li: { vehicle?: { id?: string } }) => li.vehicle?.id)?.vehicle?.id;
           if (vid) {
             fetch(`/api/vehicles/${vid}/expenses`)
@@ -145,79 +116,62 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
               .then((eb) => { if (eb.data) setExpenses(eb.data); })
               .catch(() => {});
           }
-        } else {
-          setError(b.error || "Not found");
-        }
+        } else { setError(b.error || "Not found"); }
       })
       .catch(() => setError("Failed to load"))
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading)
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-red-500 border-t-transparent" />
-          <p className="text-sm font-medium text-gray-500">Loading invoice…</p>
-        </div>
+  if (loading) return (
+    <div className="flex h-screen items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-red-500 border-t-transparent" />
+        <p className="text-sm font-medium text-gray-500">Loading invoice…</p>
       </div>
-    );
+    </div>
+  );
 
-  if (error || !invoice)
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <p className="text-lg font-semibold text-red-600">Error</p>
-          <p className="mt-1 text-sm text-gray-500">{error || "Invoice not found."}</p>
-          <Link href="/invoices" className="mt-4 inline-block rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
-            Back to Invoices
-          </Link>
-        </div>
+  if (error || !invoice) return (
+    <div className="flex h-screen items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <p className="text-lg font-semibold text-red-600">Error</p>
+        <p className="mt-1 text-sm text-gray-500">{error || "Invoice not found."}</p>
+        <Link href="/invoices" className="mt-4 inline-block rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">Back to Invoices</Link>
       </div>
-    );
+    </div>
+  );
 
-  const balance = invoice.totalAmount - (invoice.paidAmount || 0);
+  const balance = Math.max(invoice.totalAmount - (invoice.paidAmount || 0), 0);
   const driverName = invoice.driver?.name || invoice.tripSheet?.driver?.name;
-  // Use top-level vehicle or fall back to first line item's vehicle
   const primaryVehicle = invoice.vehicle ?? invoice.lineItems?.find((li) => li.vehicle)?.vehicle ?? null;
-  const hasServiceDetails = !!(primaryVehicle?.registrationNumber || driverName || invoice.tripSheet);
   const hasLineItems = !!(invoice.lineItems && invoice.lineItems.length > 0);
   const showSubtotal = invoice.subtotal !== invoice.totalAmount;
-
-  // Vehicle expense totals by category
   const dieselTotal = expenses.filter((e) => e.category === "diesel").reduce((s, e) => s + e.amount, 0);
   const fastagTotal = expenses.filter((e) => e.category === "fasttag").reduce((s, e) => s + e.amount, 0);
   const policeTotal = expenses.filter((e) => e.category === "police").reduce((s, e) => s + e.amount, 0);
-  const hasVehicleExpenses = dieselTotal > 0 || fastagTotal > 0 || policeTotal > 0;
 
   const statusStyles: Record<string, string> = {
-    paid: "bg-green-100 text-green-800 border border-green-200",
-    sent: "bg-blue-100 text-blue-800 border border-blue-200",
-    overdue: "bg-red-100 text-red-800 border border-red-200",
-    draft: "bg-gray-100 text-gray-600 border border-gray-200",
+    paid: "bg-green-100 text-green-800 border-green-200",
+    sent: "bg-blue-100 text-blue-800 border-blue-200",
+    overdue: "bg-red-100 text-red-800 border-red-200",
+    draft: "bg-gray-100 text-gray-600 border-gray-200",
   };
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4 print:bg-white print:py-0 print:px-0">
 
-      {/* Print action bar — hidden on print */}
-      <div className="mx-auto mb-6 max-w-3xl rounded-xl border border-gray-200 bg-white p-4 shadow-sm no-print print:hidden">
+      {/* ── Print toolbar ── */}
+      <div className="mx-auto mb-6 max-w-4xl rounded-xl border border-gray-200 bg-white p-4 shadow-sm print:hidden">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="font-bold text-gray-900">Invoice {invoice.invoiceNumber}</p>
             <p className="text-xs text-gray-400">Ready to print or save as PDF</p>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={() => window.print()}
-              className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
-            >
+            <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors">
               🖨️ Print / Download PDF
             </button>
-            <Link
-              href="/invoices"
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-            >
+            <Link href="/invoices" className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
               ✕ Close
             </Link>
           </div>
@@ -225,430 +179,258 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
       </div>
 
       {/* ── Invoice Sheet ── */}
-      <div
-        id="invoice-sheet"
-        className="mx-auto max-w-3xl bg-white shadow-sm print:shadow-none print:max-w-full"
-      >
-        {/* ── TOP STRIP — red accent bar ── */}
-        <div className="h-1.5 bg-red-600 print:bg-red-600" />
+      <div className="mx-auto max-w-4xl bg-white shadow-sm print:shadow-none print:max-w-full">
+        {/* Top red bar */}
+        <div className="h-2 bg-red-600 print:bg-red-600" />
 
-        <div className="p-8 sm:p-10 print:p-8">
+        <div className="p-8 print:p-7">
 
-          {/* ── HEADER ── */}
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-            {/* Left: logo + company */}
+          {/* ══ HEADER ══ */}
+          <div className="flex items-start justify-between gap-6">
             <div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/logo.png"
-                onError={(e) => { const img = e.currentTarget; if (!img.src.endsWith("/logo.svg")) img.src = "/logo.svg"; }}
-                alt="Hi Wood Transporting"
-                className="h-16 w-auto max-w-[220px] object-contain object-left"
-              />
-              <p className="mt-2 text-xs text-gray-500">Transportation &amp; Logistics Services</p>
-              <p className="text-xs text-gray-500">Kerala, India</p>
+              <img src="/logo.png" onError={(e) => { const i = e.currentTarget; if (!i.src.endsWith("/logo.svg")) i.src = "/logo.svg"; }}
+                alt="Hi Wood Transporting" className="h-16 w-auto max-w-[200px] object-contain object-left" />
+              <p className="mt-1.5 text-xs text-gray-500">Transportation &amp; Logistics Services · Kerala, India</p>
             </div>
-
-            {/* Right: invoice meta */}
-            <div className="sm:text-right">
-              <h1 className="text-3xl font-black tracking-tight text-gray-900 uppercase">Invoice</h1>
-              <div className="mt-3 space-y-1 text-sm">
-                <p className="text-gray-500">
-                  <span className="font-semibold text-gray-700">No:</span>{" "}
-                  <span className="font-bold text-gray-900">{invoice.invoiceNumber}</span>
-                </p>
-                <p className="text-gray-500">
-                  <span className="font-semibold text-gray-700">Date:</span>{" "}
-                  {fmtDate(invoice.invoiceDate)}
-                </p>
-                <p className="mt-2">
-                  <span className={`inline-block rounded-md px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider ${statusStyles[invoice.status] ?? statusStyles.draft}`}>
-                    {invoice.status}
-                  </span>
-                </p>
+            <div className="text-right">
+              <h1 className="text-4xl font-black tracking-tight text-gray-900 uppercase">Invoice</h1>
+              <div className="mt-2 space-y-0.5 text-sm">
+                <p><span className="text-gray-500">No: </span><span className="font-bold text-gray-900">{invoice.invoiceNumber}</span></p>
+                <p><span className="text-gray-500">Date: </span><span className="font-semibold text-gray-700">{fmtDate(invoice.invoiceDate)}</span></p>
               </div>
+              <span className={`mt-2 inline-block rounded border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusStyles[invoice.status] ?? statusStyles.draft}`}>
+                {invoice.status}
+              </span>
             </div>
           </div>
 
-          {/* ── DIVIDER ── */}
-          <div className="my-6 border-t border-gray-200" />
+          <div className="my-5 border-t-2 border-gray-100" />
 
-          {/* ── BILL TO & BOOKING DETAILS ── */}
+          {/* ══ BILL TO + BOOKING ══ */}
           {(invoice.customer || invoice.tripSheet?.booking) && (
             <>
-              <div className="grid grid-cols-1 gap-6 text-sm sm:grid-cols-2">
-                {/* Left: Customer Bill To */}
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 {invoice.customer && (
                   <div>
-                    <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">Bill To</p>
-                    <p className="font-bold text-gray-900 text-base">{invoice.customer.name}</p>
-                    {invoice.customer.address && <p className="mt-1 text-gray-500 whitespace-pre-line leading-relaxed">{invoice.customer.address}</p>}
-                    {invoice.customer.phone && <p className="mt-1 text-gray-500">Phone: {invoice.customer.phone}</p>}
-                    {invoice.customer.gstNumber && (
-                      <p className="mt-1 text-xs text-gray-500">
-                        <span className="font-semibold text-gray-700">GSTIN:</span> {invoice.customer.gstNumber}
-                      </p>
-                    )}
+                    <SectionHead title="Bill To" />
+                    <p className="text-base font-bold text-gray-900">{invoice.customer.name}</p>
+                    {invoice.customer.address && <p className="mt-1 text-xs text-gray-500 whitespace-pre-line">{invoice.customer.address}</p>}
+                    {invoice.customer.phone && <p className="mt-0.5 text-xs text-gray-500">📞 {invoice.customer.phone}</p>}
+                    {invoice.customer.gstNumber && <p className="mt-0.5 text-xs text-gray-500">GSTIN: <span className="font-semibold">{invoice.customer.gstNumber}</span></p>}
                   </div>
                 )}
-                
-                {/* Right: Booking Details */}
                 {invoice.tripSheet?.booking && (
                   <div>
-                    <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">Booking Details</p>
-                    <div className="space-y-1.5">
-                      <p className="text-gray-500">
-                        <span className="font-semibold text-gray-700">Route:</span>{" "}
-                        <span className="font-bold text-gray-900">
-                          {invoice.tripSheet.booking.pickupLocation} ➔ {invoice.tripSheet.booking.dropLocation}
-                        </span>
-                      </p>
-                      <p className="text-gray-500">
-                        <span className="font-semibold text-gray-700">Period:</span>{" "}
-                        {fmtDate(invoice.tripSheet.booking.pickupDate)} — {fmtDate(invoice.tripSheet.booking.dropDate)}
-                      </p>
-                      <p className="text-gray-500">
-                        <span className="font-semibold text-gray-700">Rate/Day:</span> {fmt(invoice.tripSheet.booking.ratePerDay)}
-                      </p>
-                    </div>
+                    <SectionHead title="Booking Details" />
+                    <p className="text-sm font-bold text-gray-900">{invoice.tripSheet.booking.pickupLocation} ➔ {invoice.tripSheet.booking.dropLocation}</p>
+                    <p className="mt-1 text-xs text-gray-500">Period: {fmtDate(invoice.tripSheet.booking.pickupDate)} — {fmtDate(invoice.tripSheet.booking.dropDate)}</p>
+                    <p className="text-xs text-gray-500">Rate/Day: <span className="font-semibold">{fmt(invoice.tripSheet.booking.ratePerDay)}</span></p>
                   </div>
                 )}
               </div>
-              <div className="my-6 border-t border-gray-200" />
+              <div className="my-5 border-t border-gray-100" />
             </>
           )}
 
-          {/* ── SERVICE DETAILS (only when data exists) ── */}
-          {hasServiceDetails && (
+          {/* ══ SERVICE + VEHICLE DETAILS ══ */}
+          {(primaryVehicle || driverName || invoice.tripSheet) && (
             <>
-              <div>
-                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-gray-400">Service Details</p>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
-                  {driverName && (
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Driver</p>
-                      <p className="mt-0.5 font-bold text-gray-800">{driverName}</p>
-                    </div>
-                  )}
-                  {invoice.tripSheet && (
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Period</p>
-                      <p className="mt-0.5 font-bold text-gray-800">
-                        {fmtDate(invoice.tripSheet.startDate)} — {fmtDate(invoice.tripSheet.endDate)}
-                      </p>
-                      {invoice.tripSheet.distance > 0 && (
-                        <p className="text-xs text-gray-500">{invoice.tripSheet.distance.toLocaleString("en-IN")} km</p>
-                      )}
-                    </div>
-                  )}
+              {/* Driver / Trip period row */}
+              {(driverName || invoice.tripSheet) && (
+                <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  {driverName && <DetailRow label="Driver" value={driverName} bold />}
+                  {invoice.tripSheet && <>
+                    <DetailRow label="Trip Start" value={fmtDate(invoice.tripSheet.startDate)} />
+                    <DetailRow label="Trip End" value={fmtDate(invoice.tripSheet.endDate)} />
+                    {invoice.tripSheet.distance > 0 && <DetailRow label="Distance" value={`${invoice.tripSheet.distance.toLocaleString("en-IN")} km`} />}
+                  </>}
                 </div>
-              </div>
+              )}
 
-              {/* ── VEHICLE DETAILS full table ── */}
+              {/* Vehicle details card */}
               {primaryVehicle?.registrationNumber && (
-                <div className="mt-5">
-                  <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-gray-400">Vehicle Details</p>
-                  <div className="rounded-lg border border-gray-200 overflow-hidden">
-                    <table className="w-full text-xs">
-                      <tbody className="divide-y divide-gray-100">
-                        <tr className="bg-gray-50">
-                          <td className="px-3 py-2 font-semibold text-gray-500 w-1/3">Registration No.</td>
-                          <td className="px-3 py-2 font-bold text-gray-900">{primaryVehicle.registrationNumber}</td>
-                          <td className="px-3 py-2 font-semibold text-gray-500 w-1/3">Type</td>
-                          <td className="px-3 py-2 font-semibold text-gray-700 uppercase">{primaryVehicle.type || "—"}</td>
-                        </tr>
-                        <tr>
-                          <td className="px-3 py-2 font-semibold text-gray-500">Brand</td>
-                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.make || "—"}</td>
-                          <td className="px-3 py-2 font-semibold text-gray-500">Model</td>
-                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.model || "—"}</td>
-                        </tr>
-                        <tr className="bg-gray-50">
-                          <td className="px-3 py-2 font-semibold text-gray-500">Capacity</td>
-                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.capacityTons ? `${primaryVehicle.capacityTons} T` : "—"}</td>
-                          <td className="px-3 py-2 font-semibold text-gray-500">Vehicle Class</td>
-                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.vehicleClass || "—"}</td>
-                        </tr>
-                        <tr>
-                          <td className="px-3 py-2 font-semibold text-gray-500">Ownership</td>
-                          <td className="px-3 py-2 text-gray-700 capitalize">{primaryVehicle.ownership || "—"}</td>
-                          <td className="px-3 py-2 font-semibold text-gray-500">Owner Name</td>
-                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.ownerName || "—"}</td>
-                        </tr>
-                        <tr className="bg-gray-50">
-                          <td className="px-3 py-2 font-semibold text-gray-500">Area / Region</td>
-                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.area || "—"}</td>
-                          <td className="px-3 py-2 font-semibold text-gray-500">Registering Auth.</td>
-                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.registeringAuthority || "—"}</td>
-                        </tr>
-                        <tr>
-                          <td className="px-3 py-2 font-semibold text-gray-500">Emission Norm</td>
-                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.emissionNorm || "—"}</td>
-                          <td className="px-3 py-2 font-semibold text-gray-500">RC Status</td>
-                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.vehicleStatus || "—"}</td>
-                        </tr>
-                        <tr className="bg-gray-50">
-                          <td className="px-3 py-2 font-semibold text-gray-500">Hypothecated</td>
-                          <td className="px-3 py-2 text-gray-700">{primaryVehicle.hypothecated ? "Yes" : "No"}</td>
-                          <td className="px-3 py-2 font-semibold text-gray-500">Reg. Date</td>
-                          <td className="px-3 py-2 text-gray-700">{fmtDate(primaryVehicle.registrationDate)}</td>
-                        </tr>
-                        <tr>
-                          <td className="px-3 py-2 font-semibold text-gray-500">Insurance Expiry</td>
-                          <td className="px-3 py-2 text-gray-700">{fmtDate(primaryVehicle.insuranceExpiry)}</td>
-                          <td className="px-3 py-2 font-semibold text-gray-500">Fitness Expiry</td>
-                          <td className="px-3 py-2 text-gray-700">{fmtDate(primaryVehicle.fitnessExpiry)}</td>
-                        </tr>
-                        <tr className="bg-gray-50">
-                          <td className="px-3 py-2 font-semibold text-gray-500">Tax Valid Upto</td>
-                          <td className="px-3 py-2 text-gray-700">{fmtDate(primaryVehicle.taxValidUpto)}</td>
-                          <td className="px-3 py-2 font-semibold text-gray-500">Permit Valid Upto</td>
-                          <td className="px-3 py-2 text-gray-700">{fmtDate(primaryVehicle.permitValidUpto)}</td>
-                        </tr>
-                        <tr>
-                          <td className="px-3 py-2 font-semibold text-gray-500">PUCC Valid Upto</td>
-                          <td className="px-3 py-2 text-gray-700">{fmtDate(primaryVehicle.puccValidUpto)}</td>
-                          <td className="px-3 py-2 font-semibold text-gray-500">Status</td>
-                          <td className="px-3 py-2">
-                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${primaryVehicle.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                              {primaryVehicle.isActive ? "Active" : "Inactive"}
-                            </span>
-                          </td>
-                        </tr>
-                        {(dieselTotal > 0 || fastagTotal > 0 || policeTotal > 0) && (
-                          <tr className="bg-purple-50">
-                            <td colSpan={4} className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                              Vehicle Expenses
-                            </td>
-                          </tr>
-                        )}
-                        {dieselTotal > 0 && (
-                          <tr>
-                            <td className="px-3 py-2 font-semibold text-gray-500">Diesel</td>
-                            <td className="px-3 py-2 font-semibold text-purple-700">{fmt(dieselTotal)}</td>
-                            <td className="px-3 py-2 font-semibold text-gray-500">FASTag</td>
-                            <td className="px-3 py-2 font-semibold text-cyan-700">{fastagTotal > 0 ? fmt(fastagTotal) : "—"}</td>
-                          </tr>
-                        )}
-                        {policeTotal > 0 && (
-                          <tr className="bg-gray-50">
-                            <td className="px-3 py-2 font-semibold text-gray-500">Police</td>
-                            <td className="px-3 py-2 font-semibold text-orange-700">{fmt(policeTotal)}</td>
-                            <td className="px-3 py-2 font-semibold text-gray-500">Total Expenses</td>
-                            <td className="px-3 py-2 font-extrabold text-gray-900">{fmt(dieselTotal + fastagTotal + policeTotal)}</td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
+                <>
+                  <SectionHead title="Vehicle Details" />
+                  <div className="rounded-xl border border-gray-200 overflow-hidden mb-5">
+                    {/* Vehicle header strip */}
+                    <div className="flex items-center justify-between bg-gray-900 px-4 py-2.5">
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg font-black text-white tracking-tight">{primaryVehicle.registrationNumber}</span>
+                        {primaryVehicle.type && <span className="rounded bg-red-600 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">{primaryVehicle.type}</span>}
+                        {primaryVehicle.make && <span className="text-xs text-gray-300">{[primaryVehicle.make, primaryVehicle.model].filter(Boolean).join(" ")}</span>}
+                      </div>
+                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${primaryVehicle.isActive ? "bg-green-500 text-white" : "bg-gray-500 text-white"}`}>
+                        {primaryVehicle.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                    {/* Details grid */}
+                    <div className="grid grid-cols-2 gap-px bg-gray-100 sm:grid-cols-4">
+                      {[
+                        { label: "Capacity", value: primaryVehicle.capacityTons ? `${primaryVehicle.capacityTons} T` : "" },
+                        { label: "Vehicle Class", value: primaryVehicle.vehicleClass || "" },
+                        { label: "Ownership", value: primaryVehicle.ownership || "" },
+                        { label: "Owner Name", value: primaryVehicle.ownerName || "" },
+                        { label: "Area / Region", value: primaryVehicle.area || "" },
+                        { label: "Registering Auth.", value: primaryVehicle.registeringAuthority || "" },
+                        { label: "Emission Norm", value: primaryVehicle.emissionNorm || "" },
+                        { label: "RC Status", value: primaryVehicle.vehicleStatus || "" },
+                        { label: "Hypothecated", value: primaryVehicle.hypothecated ? "Yes" : "No" },
+                        { label: "Reg. Date", value: fmtDate(primaryVehicle.registrationDate) },
+                        { label: "Insurance Expiry", value: fmtDate(primaryVehicle.insuranceExpiry) },
+                        { label: "Fitness Expiry", value: fmtDate(primaryVehicle.fitnessExpiry) },
+                        { label: "Tax Valid Upto", value: fmtDate(primaryVehicle.taxValidUpto) },
+                        { label: "Permit Valid Upto", value: fmtDate(primaryVehicle.permitValidUpto) },
+                        { label: "PUCC Valid Upto", value: fmtDate(primaryVehicle.puccValidUpto) },
+                      ].map((item) => (
+                        <div key={item.label} className="bg-white px-3 py-2">
+                          <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400">{item.label}</p>
+                          <p className="mt-0.5 text-xs font-semibold text-gray-800">{item.value || "—"}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                </>
               )}
-              <div className="my-6 border-t border-gray-200" />
+              <div className="my-5 border-t border-gray-100" />
             </>
           )}
 
-          {/* ── LINE ITEMS TABLE ── */}
-          <div>
-            <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-              {hasLineItems ? "Items" : "Charges"}
-            </p>
-
-            {hasLineItems ? (
-              <table className="w-full table-fixed text-sm">
-                <colgroup>
-                  <col className="w-[28%]" />
-                  <col className="w-[15%]" />
-                  <col className="w-[19%]" />
-                  <col className="w-[9%]" />
-                  <col className="w-[13%]" />
-                  <col className="w-[16%]" />
-                </colgroup>
-                <thead>
-                  <tr className="border-b-2 border-gray-200 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                    <th className="pb-2.5 text-left">Description</th>
-                    <th className="pb-2.5 text-left">Vehicle</th>
-                    <th className="pb-2.5 text-right">KM (Start → End)</th>
-                    <th className="pb-2.5 text-right">Days</th>
-                    <th className="pb-2.5 text-right">Ton/Day</th>
-                    <th className="pb-2.5 text-right">Amount</th>
+          {/* ══ ITEMS TABLE ══ */}
+          <SectionHead title={hasLineItems ? "Items" : "Charges"} />
+          {hasLineItems ? (
+            <table className="w-full table-fixed text-sm">
+              <colgroup><col className="w-[28%]"/><col className="w-[14%]"/><col className="w-[18%]"/><col className="w-[10%]"/><col className="w-[14%]"/><col className="w-[16%]"/></colgroup>
+              <thead>
+                <tr className="border-b-2 border-gray-900 text-[9px] font-bold uppercase tracking-widest text-gray-500">
+                  <th className="pb-2 text-left">Description</th>
+                  <th className="pb-2 text-left">Vehicle</th>
+                  <th className="pb-2 text-right">KM Start → End</th>
+                  <th className="pb-2 text-right">Days</th>
+                  <th className="pb-2 text-right">Rate</th>
+                  <th className="pb-2 text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoice.lineItems!.map((li, idx) => (
+                  <tr key={idx} className="border-b border-gray-100 align-top">
+                    <td className="py-2.5 pr-2 font-medium text-gray-800 break-words">{li.description || "—"}</td>
+                    <td className="py-2.5 pr-2 break-words">
+                      {li.vehicle?.registrationNumber ? (
+                        <><span className="font-bold text-gray-800">{li.vehicle.registrationNumber}</span>
+                        {li.vehicle.make && <span className="block text-[10px] text-gray-400">{[li.vehicle.make, li.vehicle.model].filter(Boolean).join(" ")}</span>}</>
+                      ) : "—"}
+                    </td>
+                    <td className="py-2.5 text-right font-mono text-gray-700 text-xs">
+                      {li.startKm || li.endKm ? <>{li.startKm.toLocaleString("en-IN")} → {li.endKm.toLocaleString("en-IN")}{li.km > 0 && <span className="block text-[10px] text-gray-400">{li.km.toLocaleString("en-IN")} km</span>}</> : "—"}
+                    </td>
+                    <td className="py-2.5 text-right font-mono text-gray-700">{li.quantity}</td>
+                    <td className="py-2.5 text-right font-mono text-gray-700">{fmt(li.rate)}</td>
+                    <td className="py-2.5 text-right font-bold text-gray-900">{fmt(li.amount)}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {invoice.lineItems!.map((li, idx) => (
-                    <tr key={idx} className="border-b border-gray-100 align-top">
-                      <td className="py-3 pr-3 font-medium text-gray-800 break-words">
-                        {li.description || <span className="text-gray-300">—</span>}
-                      </td>
-                      <td className="py-3 pr-3 text-gray-600 break-words">
-                        {li.vehicle?.registrationNumber ? (
-                          <>
-                            <span className="font-semibold text-gray-700">{li.vehicle.registrationNumber}</span>
-                            {vehicleSummary(li.vehicle) && (
-                              <span className="mt-0.5 block text-xs text-gray-400">{vehicleSummary(li.vehicle)}</span>
-                            )}
-                          </>
-                        ) : (
-                          <span className="text-gray-300">—</span>
-                        )}
-                      </td>
-                      <td className="py-3 text-right font-mono tabular-nums text-gray-700">
-                        {li.startKm || li.endKm ? (
-                          <>
-                            <span className="whitespace-nowrap">
-                              {li.startKm.toLocaleString("en-IN")} → {li.endKm.toLocaleString("en-IN")}
-                            </span>
-                            {li.km > 0 && (
-                              <span className="block text-[10px] text-gray-400">{li.km.toLocaleString("en-IN")} km</span>
-                            )}
-                          </>
-                        ) : li.km ? (
-                          <span className="whitespace-nowrap">{li.km.toLocaleString("en-IN")} km</span>
-                        ) : (
-                          <span className="text-gray-300">—</span>
-                        )}
-                      </td>
-                      <td className="py-3 text-right font-mono tabular-nums text-gray-700 whitespace-nowrap">{li.quantity}</td>
-                      <td className="py-3 text-right font-mono tabular-nums text-gray-700 whitespace-nowrap">{fmt(li.rate)}</td>
-                      <td className="py-3 text-right font-semibold text-gray-900 whitespace-nowrap">{fmt(li.amount)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b-2 border-gray-200 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                    <th className="pb-2.5 text-left">Description</th>
-                    <th className="pb-2.5 text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {invoice.tripSheet ? (
-                    <>
-                      <tr className="border-b border-gray-100">
-                        <td className="py-3 pr-3 font-medium text-gray-800">Logistics &amp; Transportation</td>
-                        <td className="py-3 text-right font-mono tabular-nums font-semibold text-gray-900">{fmt(invoice.subtotal)}</td>
-                      </tr>
-                      {invoice.tripSheet.dieselCost > 0 && (
-                        <tr className="border-b border-gray-100">
-                          <td className="py-3 pr-3 text-gray-500">Fuel / Diesel Charges</td>
-                          <td className="py-3 text-right font-mono tabular-nums text-gray-400">{fmt(invoice.tripSheet.dieselCost)}</td>
-                        </tr>
-                      )}
-                      {invoice.tripSheet.toll > 0 && (
-                        <tr className="border-b border-gray-100">
-                          <td className="py-3 pr-3 text-gray-500">Toll Charges</td>
-                          <td className="py-3 text-right font-mono tabular-nums text-gray-400">{fmt(invoice.tripSheet.toll)}</td>
-                        </tr>
-                      )}
-                      {invoice.tripSheet.otherExpenses > 0 && (
-                        <tr className="border-b border-gray-100">
-                          <td className="py-3 pr-3 text-gray-500">Other Expenses</td>
-                          <td className="py-3 text-right font-mono tabular-nums text-gray-400">{fmt(invoice.tripSheet.otherExpenses)}</td>
-                        </tr>
-                      )}
-                    </>
-                  ) : (
-                    <tr className="border-b border-gray-100">
-                      <td className="py-3 pr-3 font-medium text-gray-800">Transportation Charge</td>
-                      <td className="py-3 text-right font-mono tabular-nums font-semibold text-gray-900">{fmt(invoice.subtotal)}</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            )}
-          </div>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b-2 border-gray-900 text-[9px] font-bold uppercase tracking-widest text-gray-500">
+                  <th className="pb-2 text-left">Description</th><th className="pb-2 text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoice.tripSheet ? (
+                  <>
+                    <tr className="border-b border-gray-100"><td className="py-2.5 font-medium text-gray-800">Logistics &amp; Transportation</td><td className="py-2.5 text-right font-bold text-gray-900">{fmt(invoice.subtotal)}</td></tr>
+                    {invoice.tripSheet.dieselCost > 0 && <tr className="border-b border-gray-100"><td className="py-2.5 text-gray-500">Fuel / Diesel</td><td className="py-2.5 text-right text-gray-600">{fmt(invoice.tripSheet.dieselCost)}</td></tr>}
+                    {invoice.tripSheet.toll > 0 && <tr className="border-b border-gray-100"><td className="py-2.5 text-gray-500">Toll Charges</td><td className="py-2.5 text-right text-gray-600">{fmt(invoice.tripSheet.toll)}</td></tr>}
+                    {invoice.tripSheet.otherExpenses > 0 && <tr className="border-b border-gray-100"><td className="py-2.5 text-gray-500">Other Expenses</td><td className="py-2.5 text-right text-gray-600">{fmt(invoice.tripSheet.otherExpenses)}</td></tr>}
+                  </>
+                ) : (
+                  <tr className="border-b border-gray-100"><td className="py-2.5 font-medium text-gray-800">Transportation Charge</td><td className="py-2.5 text-right font-bold text-gray-900">{fmt(invoice.subtotal)}</td></tr>
+                )}
+              </tbody>
+            </table>
+          )}
 
-          {/* ── VEHICLE EXPENSES (Diesel / FASTag / Police) ── */}
-          {hasVehicleExpenses && (
+          {/* ══ VEHICLE EXPENSES (Diesel / FASTag / Police) ══ */}
+          {(dieselTotal > 0 || fastagTotal > 0 || policeTotal > 0) && (
             <>
-              <div className="my-6 border-t border-gray-200" />
-              <div>
-                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                  Vehicle Expenses
-                </p>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b-2 border-gray-200 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                      <th className="pb-2.5 text-left">Expense</th>
-                      <th className="pb-2.5 text-right">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dieselTotal > 0 && (
-                      <tr className="border-b border-gray-100">
-                        <td className="py-3 pr-3 font-medium text-gray-800">Diesel</td>
-                        <td className="py-3 text-right font-mono tabular-nums font-semibold text-gray-900">{fmt(dieselTotal)}</td>
-                      </tr>
-                    )}
-                    {fastagTotal > 0 && (
-                      <tr className="border-b border-gray-100">
-                        <td className="py-3 pr-3 font-medium text-gray-800">FASTag</td>
-                        <td className="py-3 text-right font-mono tabular-nums font-semibold text-gray-900">{fmt(fastagTotal)}</td>
-                      </tr>
-                    )}
-                    {policeTotal > 0 && (
-                      <tr className="border-b border-gray-100">
-                        <td className="py-3 pr-3 font-medium text-gray-800">Police</td>
-                        <td className="py-3 text-right font-mono tabular-nums font-semibold text-gray-900">{fmt(policeTotal)}</td>
-                      </tr>
-                    )}
-                  </tbody>
-                  <tfoot>
-                    <tr className="border-t-2 border-gray-200">
-                      <td className="py-2.5 pr-3 text-xs font-bold uppercase tracking-wider text-gray-500">Total Vehicle Expenses</td>
-                      <td className="py-2.5 text-right font-mono tabular-nums font-extrabold text-gray-900">
-                        {fmt(dieselTotal + fastagTotal + policeTotal)}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
+              <div className="my-5 border-t border-gray-100" />
+              <SectionHead title="Vehicle Expenses" />
+              <div className="grid grid-cols-3 gap-3 mb-2">
+                {dieselTotal > 0 && (
+                  <div className="rounded-lg border border-purple-100 bg-purple-50 px-3 py-2.5">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-purple-400">Diesel</p>
+                    <p className="mt-0.5 text-sm font-extrabold text-purple-700">{fmt(dieselTotal)}</p>
+                  </div>
+                )}
+                {fastagTotal > 0 && (
+                  <div className="rounded-lg border border-cyan-100 bg-cyan-50 px-3 py-2.5">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-cyan-400">FASTag</p>
+                    <p className="mt-0.5 text-sm font-extrabold text-cyan-700">{fmt(fastagTotal)}</p>
+                  </div>
+                )}
+                {policeTotal > 0 && (
+                  <div className="rounded-lg border border-orange-100 bg-orange-50 px-3 py-2.5">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-orange-400">Police</p>
+                    <p className="mt-0.5 text-sm font-extrabold text-orange-700">{fmt(policeTotal)}</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end">
+                <div className="rounded-lg bg-gray-100 px-4 py-2 text-right">
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Total Vehicle Expenses</p>
+                  <p className="text-base font-extrabold text-gray-900">{fmt(dieselTotal + fastagTotal + policeTotal)}</p>
+                </div>
               </div>
             </>
           )}
 
-          {/* ── TOTALS ── */}
-          <div className="mt-6 flex justify-end">
-            <div className="w-full sm:w-72 space-y-0 text-sm">
+          {/* ══ TOTALS ══ */}
+          <div className="my-5 border-t-2 border-gray-900" />
+          <div className="flex justify-end">
+            <div className="w-64 space-y-1 text-sm">
               {showSubtotal && (
-                <div className="flex justify-between py-2 text-gray-500">
-                  <span>Subtotal</span>
-                  <span className="font-mono tabular-nums">{fmt(invoice.subtotal)}</span>
+                <div className="flex justify-between text-gray-500">
+                  <span>Subtotal</span><span className="font-mono">{fmt(invoice.subtotal)}</span>
                 </div>
               )}
-              <div className={`flex justify-between ${showSubtotal ? "border-t border-gray-200 pt-2" : "py-2"} text-base font-bold text-gray-900`}>
-                <span>Total</span>
-                <span className="font-mono tabular-nums">{fmt(invoice.totalAmount)}</span>
+              {invoice.gstAmount > 0 && (
+                <div className="flex justify-between text-gray-500">
+                  <span>GST ({invoice.gstPercentage}%)</span><span className="font-mono">{fmt(invoice.gstAmount)}</span>
+                </div>
+              )}
+              <div className="flex justify-between border-t border-gray-200 pt-1.5 text-base font-bold text-gray-900">
+                <span>Total</span><span className="font-mono">{fmt(invoice.totalAmount)}</span>
               </div>
               {(invoice.paidAmount || 0) > 0 && (
-                <div className="flex justify-between py-2 text-green-700">
-                  <span className="font-medium">Paid</span>
-                  <span className="font-mono tabular-nums font-bold">{fmt(invoice.paidAmount)}</span>
+                <div className="flex justify-between text-green-700">
+                  <span className="font-medium">Paid</span><span className="font-mono font-bold">{fmt(invoice.paidAmount)}</span>
                 </div>
               )}
-              <div className={`flex justify-between border-t-2 ${balance <= 0 ? "border-gray-200" : "border-red-100"} mt-1 pt-3 text-base font-extrabold ${balance <= 0 ? "text-gray-400" : "text-red-700"}`}>
-                <span>Balance Due</span>
-                <span className="font-mono tabular-nums">{fmt(Math.max(balance, 0))}</span>
+              <div className={`flex justify-between border-t-2 pt-2 text-base font-extrabold ${balance <= 0 ? "border-gray-200 text-gray-400" : "border-red-200 text-red-700"}`}>
+                <span>Balance Due</span><span className="font-mono">{fmt(balance)}</span>
               </div>
             </div>
           </div>
 
-          {/* ── NOTES ── */}
+          {/* ══ NOTES ══ */}
           {invoice.notes && (
-            <div className="mt-8 rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">Notes</p>
+            <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-3.5">
+              <p className="mb-1 text-[9px] font-bold uppercase tracking-widest text-gray-400">Notes</p>
               <p className="text-sm text-gray-600 whitespace-pre-line">{invoice.notes}</p>
             </div>
           )}
 
-          {/* ── FOOTER ── */}
-          <div className="mt-10 border-t border-gray-200 pt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 text-xs text-gray-400">
+          {/* ══ FOOTER ══ */}
+          <div className="mt-8 grid grid-cols-1 gap-6 border-t border-gray-200 pt-6 sm:grid-cols-2 text-xs text-gray-400">
             <div>
               <p className="mb-1.5 font-bold text-gray-500">Terms &amp; Conditions</p>
               <p>1. Please pay within 15 days of invoice date.</p>
               <p>2. Interest of 18% p.a. will be charged for delayed payments.</p>
             </div>
-            <div className="flex flex-col items-start sm:items-end justify-end">
+            <div className="flex flex-col items-end justify-end">
               <div className="w-44 border-t border-gray-300 pt-2 text-center">
                 <p className="font-bold text-gray-600">Authorized Signatory</p>
                 <p className="mt-0.5 text-[10px] text-gray-400">Hi Wood Transporting</p>
@@ -657,9 +439,8 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
           </div>
 
         </div>
-
-        {/* ── BOTTOM STRIP ── */}
-        <div className="h-1 bg-gray-100 print:bg-gray-100" />
+        {/* Bottom strip */}
+        <div className="h-1 bg-gradient-to-r from-red-600 via-red-400 to-red-600" />
       </div>
     </div>
   );
