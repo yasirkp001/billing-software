@@ -223,7 +223,7 @@ export function InvoiceManager() {
   // Dynamic select options
   const [customers, setCustomers] = useState<Option[]>([]);
   const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
-  const [drivers, setDrivers] = useState<(Option & { phone?: string; licenseNumber?: string; licenseExpiry?: string; salary?: number; isActive?: boolean })[]>([]);
+  const [drivers, setDrivers] = useState<(Option & { phone?: string; licenseNumber?: string; licenseExpiry?: string; salary?: number; isActive?: boolean; tripCount?: number })[]>([]);
 
   // Edit / create modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -302,17 +302,34 @@ export function InvoiceManager() {
     };
     fetchOpts("/api/customers", "name", setCustomers);
     fetchVehicleOpts();
-    // Fetch drivers with full details
+    // Fetch drivers with full details + trip count
     (async () => {
       try {
         const res = await fetch("/api/drivers");
         const body = await res.json();
         if (res.ok && body.data) {
-          setDrivers(body.data.map((d: any) => ({
+          const driverList = body.data.map((d: any) => ({
             ...d,
             value: d.id,
             label: d.name || d.id,
-          })));
+            tripCount: 0,
+          }));
+          setDrivers(driverList);
+          // Fetch trip counts in parallel
+          const counts = await Promise.all(
+            driverList.map((d: any) =>
+              fetch(`/api/bookings?q=${d.id}`)
+                .then((r) => r.json())
+                .then((b) => ({ id: d.id, count: Array.isArray(b.data) ? b.data.filter((bk: any) => bk.driverId === d.id).length : 0 }))
+                .catch(() => ({ id: d.id, count: 0 }))
+            )
+          );
+          setDrivers((prev) =>
+            prev.map((d) => ({
+              ...d,
+              tripCount: counts.find((c) => c.id === d.value)?.count ?? 0,
+            }))
+          );
         }
       } catch { /* ignore */ }
     })();
@@ -991,12 +1008,10 @@ export function InvoiceManager() {
                           <p className="mt-0.5 font-semibold text-gray-700">{new Date(dr.licenseExpiry).toLocaleDateString("en-IN")}</p>
                         </div>
                       )}
-                      {dr.salary != null && dr.salary > 0 && (
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Monthly Salary</p>
-                          <p className="mt-0.5 font-bold text-green-700">₹{Number(dr.salary).toLocaleString("en-IN")}</p>
-                        </div>
-                      )}
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Total Trips</p>
+                        <p className="mt-0.5 font-bold text-blue-700">{dr.tripCount ?? 0} trips</p>
+                      </div>
                     </div>
                   </div>
                 </div>
