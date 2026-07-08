@@ -37,6 +37,17 @@ export default async function DriverDetailPage({
 
   const totalTrips = bookings.length;
   const completedTrips = bookings.filter((b) => b.status === "completed").length;
+
+  // Per-trip amount = ratePerDay × number of days
+  const tripAmount = (b: typeof bookings[number]) => {
+    const days = Math.max(
+      1,
+      Math.ceil((new Date(b.dropDate).getTime() - new Date(b.pickupDate).getTime()) / 86400000)
+    );
+    return b.ratePerDay * days;
+  };
+  const totalTripAmount = bookings.reduce((s, b) => s + tripAmount(b), 0);
+
   const totalBilled = invoices.reduce((s, inv) => s + inv.totalAmount, 0);
   const totalPaid = invoices.reduce((s, inv) => s + inv.paidAmount, 0);
   const totalBalance = totalBilled - totalPaid;
@@ -66,7 +77,7 @@ export default async function DriverDetailPage({
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          { label: "Monthly Salary", value: money(driver.salary ?? 0), icon: "wallet" as const, tone: "text-green-700", bg: "bg-green-100 text-green-600" },
+          { label: "Total Trip Amount", value: money(totalTripAmount), icon: "wallet" as const, tone: "text-green-700", bg: "bg-green-100 text-green-600" },
           { label: "Total Billed", value: money(totalBilled), icon: "revenue" as const, tone: "text-gray-700", bg: "bg-gray-100 text-gray-600" },
           { label: "Total Paid", value: money(totalPaid), icon: "outstanding" as const, tone: "text-green-700", bg: "bg-green-100 text-green-600" },
           { label: "Balance Due", value: money(totalBalance), icon: "overdue" as const, tone: totalBalance > 0 ? "text-red-700" : "text-gray-400", bg: totalBalance > 0 ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-400" },
@@ -190,7 +201,9 @@ export default async function DriverDetailPage({
                   <th className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Customer</th>
                   <th className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Vehicle</th>
                   <th className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Route</th>
+                  <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Days</th>
                   <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Rate/Day</th>
+                  <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Amount</th>
                   <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Status</th>
                 </tr>
               </thead>
@@ -201,11 +214,22 @@ export default async function DriverDetailPage({
                     <td className="px-5 py-3 font-medium text-gray-700">{b.customer?.name || "—"}</td>
                     <td className="px-5 py-3 font-bold text-red-600">{b.vehicle?.registrationNumber || "—"}</td>
                     <td className="px-5 py-3 text-gray-600">{b.pickupLocation} ➔ {b.dropLocation}</td>
+                    <td className="whitespace-nowrap px-5 py-3 text-right text-gray-500">
+                      {Math.max(1, Math.ceil((new Date(b.dropDate).getTime() - new Date(b.pickupDate).getTime()) / 86400000))} days
+                    </td>
                     <td className="whitespace-nowrap px-5 py-3 text-right font-semibold text-gray-700">{money(b.ratePerDay)}</td>
+                    <td className="whitespace-nowrap px-5 py-3 text-right font-bold text-green-700">{money(tripAmount(b))}</td>
                     <td className="px-5 py-3 text-right"><StatusBadge status={b.status} /></td>
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-gray-200 bg-gray-50/70">
+                  <td colSpan={6} className="px-5 py-3 text-right text-xs font-bold uppercase tracking-wider text-gray-500">Total</td>
+                  <td className="whitespace-nowrap px-5 py-3 text-right font-extrabold text-green-700">{money(totalTripAmount)}</td>
+                  <td />
+                </tr>
+              </tfoot>
             </table>
           </div>
         )}
