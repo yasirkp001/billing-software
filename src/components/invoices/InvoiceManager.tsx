@@ -101,6 +101,9 @@ type FormState = {
   invoiceDate: string;
   lineItems: FormLine[];
   paidAmount: string;
+  dieselAmount: string;
+  fastagAmount: string;
+  policeAmount: string;
   status: string;
   notes: string;
 };
@@ -195,6 +198,9 @@ function emptyForm(): FormState {
     invoiceDate: todayInput(),
     lineItems: [blankLine()],
     paidAmount: "0",
+    dieselAmount: "0",
+    fastagAmount: "0",
+    policeAmount: "0",
     status: "draft",
     notes: "",
   };
@@ -370,6 +376,9 @@ export function InvoiceManager() {
             }))
           : [{ ...blankLine(), rate: String(inv.subtotal || "") }],
       paidAmount: String(inv.paidAmount ?? 0),
+      dieselAmount: "0",
+      fastagAmount: "0",
+      policeAmount: "0",
       status: inv.status,
       notes: inv.notes ?? "",
     });
@@ -428,6 +437,34 @@ export function InvoiceManager() {
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || "Save failed");
+
+      // Save Diesel / FASTag / Police as vehicle expenses if amounts > 0
+      const savedInvoice = body.data;
+      const vehicleId = form.vehicleId ||
+        form.lineItems.find((l) => l.vehicleId)?.vehicleId || null;
+      if (vehicleId) {
+        const today = new Date().toISOString().slice(0, 10);
+        const expenseEntries = [
+          { category: "diesel", amount: num(form.dieselAmount), label: "Diesel" },
+          { category: "fasttag", amount: num(form.fastagAmount), label: "FASTag" },
+          { category: "police", amount: num(form.policeAmount), label: "Police" },
+        ].filter((e) => e.amount > 0);
+        await Promise.all(
+          expenseEntries.map((e) =>
+            fetch(`/api/vehicles/${vehicleId}/expenses`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                category: e.category,
+                amount: e.amount,
+                date: today,
+                note: `Invoice ${savedInvoice?.invoiceNumber || ""}`,
+              }),
+            })
+          )
+        );
+      }
+
       setModalOpen(false);
       load(query);
     } catch (e) {
@@ -1005,9 +1042,22 @@ export function InvoiceManager() {
 
           {/* Totals + Paid Amount */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Paid Amount">
-              <Input type="number" step="any" min="0" value={form.paidAmount} onChange={(e) => setForm((f) => ({ ...f, paidAmount: e.target.value }))} placeholder="0" />
-            </Field>
+            <div className="space-y-3">
+              <Field label="Paid Amount">
+                <Input type="number" step="any" min="0" value={form.paidAmount} onChange={(e) => setForm((f) => ({ ...f, paidAmount: e.target.value }))} placeholder="0" />
+              </Field>
+              <div className="grid grid-cols-3 gap-2">
+                <Field label="Diesel">
+                  <Input type="number" step="any" min="0" value={form.dieselAmount} onChange={(e) => setForm((f) => ({ ...f, dieselAmount: e.target.value }))} placeholder="0" />
+                </Field>
+                <Field label="FASTag">
+                  <Input type="number" step="any" min="0" value={form.fastagAmount} onChange={(e) => setForm((f) => ({ ...f, fastagAmount: e.target.value }))} placeholder="0" />
+                </Field>
+                <Field label="Police">
+                  <Input type="number" step="any" min="0" value={form.policeAmount} onChange={(e) => setForm((f) => ({ ...f, policeAmount: e.target.value }))} placeholder="0" />
+                </Field>
+              </div>
+            </div>
             <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm">
               <div className="flex justify-between py-1 text-gray-600">
                 <span className="font-medium">Subtotal</span><span className="font-bold">{money(totals.subtotal, { decimals: true })}</span>
