@@ -17,32 +17,29 @@ export default async function DriverDetailPage({
   const driver = await prisma.driver.findUnique({ where: { id } }).catch(() => null);
   if (!driver) notFound();
 
-  const [bookings, tripSheets] = await Promise.all([
+  const [bookings, invoices] = await Promise.all([
     prisma.booking.findMany({
       where: { driverId: id },
       orderBy: { pickupDate: "desc" },
       take: 20,
       include: { vehicle: { select: { registrationNumber: true } }, customer: { select: { name: true } } },
     }),
-    prisma.tripSheet.findMany({
+    prisma.invoice.findMany({
       where: { driverId: id },
-      orderBy: { startDate: "desc" },
-      take: 10,
-      include: { booking: { select: { pickupLocation: true, dropLocation: true } } },
+      orderBy: { invoiceDate: "desc" },
+      include: {
+        customer: { select: { name: true } },
+        vehicle: { select: { registrationNumber: true } },
+        payments: { select: { amount: true, method: true, paymentDate: true } },
+      },
     }),
   ]);
 
   const totalTrips = bookings.length;
   const completedTrips = bookings.filter((b) => b.status === "completed").length;
-  const totalEarnings = bookings
-    .filter((b) => b.status === "completed")
-    .reduce((s, b) => {
-      const days = Math.max(
-        1,
-        Math.ceil((new Date(b.dropDate).getTime() - new Date(b.pickupDate).getTime()) / 86400000)
-      );
-      return s + b.ratePerDay * days;
-    }, 0);
+  const totalBilled = invoices.reduce((s, inv) => s + inv.totalAmount, 0);
+  const totalPaid = invoices.reduce((s, inv) => s + inv.paidAmount, 0);
+  const totalBalance = totalBilled - totalPaid;
 
   return (
     <div className="space-y-5">
@@ -70,9 +67,9 @@ export default async function DriverDetailPage({
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           { label: "Monthly Salary", value: money(driver.salary ?? 0), icon: "wallet" as const, tone: "text-green-700", bg: "bg-green-100 text-green-600" },
-          { label: "Total Trips", value: String(totalTrips), icon: "bookings" as const, tone: "text-blue-700", bg: "bg-blue-100 text-blue-600" },
-          { label: "Completed", value: String(completedTrips), icon: "revenue" as const, tone: "text-gray-700", bg: "bg-gray-100 text-gray-600" },
-          { label: "Trip Earnings", value: money(totalEarnings), icon: "revenue" as const, tone: "text-amber-700", bg: "bg-amber-100 text-amber-600" },
+          { label: "Total Billed", value: money(totalBilled), icon: "revenue" as const, tone: "text-gray-700", bg: "bg-gray-100 text-gray-600" },
+          { label: "Total Paid", value: money(totalPaid), icon: "outstanding" as const, tone: "text-green-700", bg: "bg-green-100 text-green-600" },
+          { label: "Balance Due", value: money(totalBalance), icon: "overdue" as const, tone: totalBalance > 0 ? "text-red-700" : "text-gray-400", bg: totalBalance > 0 ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-400" },
         ].map((c) => (
           <div key={c.label} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
@@ -106,6 +103,69 @@ export default async function DriverDetailPage({
           <div className="mt-4 border-t border-gray-100 pt-4">
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Notes</p>
             <p className="mt-1 whitespace-pre-line text-sm text-gray-600">{driver.notes}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Invoice Bills */}
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+          <div>
+            <h3 className="text-sm font-bold text-gray-900">Invoice Bills</h3>
+            <p className="mt-0.5 text-xs text-gray-400">{invoices.length} invoice{invoices.length !== 1 ? "s" : ""}</p>
+          </div>
+          <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">{money(totalPaid)} paid</span>
+        </div>
+        {invoices.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-10 text-center">
+            <Icon name="invoices" size={24} className="text-gray-300" />
+            <p className="text-sm font-medium text-gray-400">No invoices for this driver yet</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/70">
+                  <th className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Invoice</th>
+                  <th className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Customer</th>
+                  <th className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Vehicle</th>
+                  <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Total</th>
+                  <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Paid</th>
+                  <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Balance</th>
+                  <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {invoices.map((inv) => {
+                  const balance = Math.max(inv.totalAmount - inv.paidAmount, 0);
+                  return (
+                    <tr key={inv.id} className="hover:bg-gray-50/60">
+                      <td className="whitespace-nowrap px-5 py-3">
+                        <Link href={`/invoices?q=${encodeURIComponent(inv.invoiceNumber)}`} className="font-bold text-red-600 hover:underline">
+                          {inv.invoiceNumber}
+                        </Link>
+                        <p className="text-xs text-gray-400">{formatDate(inv.invoiceDate)}</p>
+                      </td>
+                      <td className="px-5 py-3 text-gray-700">{inv.customer?.name || "—"}</td>
+                      <td className="px-5 py-3 font-semibold text-gray-700">{inv.vehicle?.registrationNumber || "—"}</td>
+                      <td className="whitespace-nowrap px-5 py-3 text-right font-semibold text-gray-700">{money(inv.totalAmount)}</td>
+                      <td className="whitespace-nowrap px-5 py-3 text-right font-bold text-green-700">{money(inv.paidAmount)}</td>
+                      <td className="whitespace-nowrap px-5 py-3 text-right font-bold text-amber-700">{balance > 0 ? money(balance) : "—"}</td>
+                      <td className="px-5 py-3 text-right"><StatusBadge status={inv.status} /></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-gray-200 bg-gray-50/70">
+                  <td colSpan={3} className="px-5 py-3 text-right text-xs font-bold uppercase tracking-wider text-gray-500">Total</td>
+                  <td className="whitespace-nowrap px-5 py-3 text-right font-extrabold text-gray-900">{money(totalBilled)}</td>
+                  <td className="whitespace-nowrap px-5 py-3 text-right font-extrabold text-green-700">{money(totalPaid)}</td>
+                  <td className="whitespace-nowrap px-5 py-3 text-right font-extrabold text-amber-700">{totalBalance > 0 ? money(totalBalance) : "—"}</td>
+                  <td />
+                </tr>
+              </tfoot>
+            </table>
           </div>
         )}
       </div>
