@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ResourceManager } from "@/components/crud/ResourceManager";
 import type { Column, FormField, Row } from "@/components/crud/types";
 
@@ -10,14 +11,27 @@ function fmtDate(value: unknown): string {
 }
 
 const columns: Column<Row>[] = [
-  { key: "name", label: "Name", className: "font-medium" },
+  {
+    key: "name",
+    label: "Name",
+    className: "font-medium",
+    render: (r) => (
+      <Link href={`/drivers/${r.id}`} className="font-bold text-red-600 hover:text-red-700 hover:underline">
+        {String(r.name ?? "—")}
+      </Link>
+    ),
+  },
   { key: "phone", label: "Phone" },
   { key: "licenseNumber", label: "License No." },
   { key: "licenseExpiry", label: "License Expiry", render: (r) => fmtDate(r.licenseExpiry) },
   {
     key: "salary",
     label: "Salary",
-    render: (r) => (r.salary ? `₹${Number(r.salary).toLocaleString("en-IN")}` : "—"),
+    render: (r) => (
+      <span className="font-bold text-green-700">
+        {r.salary ? `₹${Number(r.salary).toLocaleString("en-IN")}` : "—"}
+      </span>
+    ),
   },
   {
     key: "isActive",
