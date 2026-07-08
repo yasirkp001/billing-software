@@ -415,6 +415,22 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
             </div>
           </div>
 
+          {/* ══ SIGNATURE BOXES ══ */}
+          <div className="mt-6 grid grid-cols-2 gap-6">
+            <div className="rounded-lg border border-gray-200 p-4">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400 mb-8">Customer Signature</p>
+              <div className="border-t border-gray-300 pt-2">
+                <p className="text-[9px] text-gray-400">Name &amp; Signature</p>
+              </div>
+            </div>
+            <div className="rounded-lg border border-gray-200 p-4">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400 mb-8">Authorized Signatory</p>
+              <div className="border-t border-gray-300 pt-2">
+                <p className="text-[9px] text-gray-400">Hi Wood Transporting</p>
+              </div>
+            </div>
+          </div>
+
           {/* ══ NOTES ══ */}
           {invoice.notes && (
             <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-3.5">
@@ -424,18 +440,10 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
           )}
 
           {/* ══ FOOTER ══ */}
-          <div className="mt-8 grid grid-cols-1 gap-6 border-t border-gray-200 pt-6 sm:grid-cols-2 text-xs text-gray-400">
-            <div>
-              <p className="mb-1.5 font-bold text-gray-500">Terms &amp; Conditions</p>
-              <p>1. Please pay within 15 days of invoice date.</p>
-              <p>2. Interest of 18% p.a. will be charged for delayed payments.</p>
-            </div>
-            <div className="flex flex-col items-end justify-end">
-              <div className="w-44 border-t border-gray-300 pt-2 text-center">
-                <p className="font-bold text-gray-600">Authorized Signatory</p>
-                <p className="mt-0.5 text-[10px] text-gray-400">Hi Wood Transporting</p>
-              </div>
-            </div>
+          <div className="mt-8 border-t border-gray-200 pt-6 text-xs text-gray-400">
+            <p className="mb-1.5 font-bold text-gray-500">Terms &amp; Conditions</p>
+            <p>1. Please pay within 15 days of invoice date.</p>
+            <p>2. Interest of 18% p.a. will be charged for delayed payments.</p>
           </div>
 
         </div>
