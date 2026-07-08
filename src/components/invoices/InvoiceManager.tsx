@@ -223,7 +223,7 @@ export function InvoiceManager() {
   // Dynamic select options
   const [customers, setCustomers] = useState<Option[]>([]);
   const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
-  const [drivers, setDrivers] = useState<Option[]>([]);
+  const [drivers, setDrivers] = useState<(Option & { phone?: string; licenseNumber?: string; licenseExpiry?: string; salary?: number; isActive?: boolean })[]>([]);
 
   // Edit / create modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -302,7 +302,20 @@ export function InvoiceManager() {
     };
     fetchOpts("/api/customers", "name", setCustomers);
     fetchVehicleOpts();
-    fetchOpts("/api/drivers", "name", setDrivers);
+    // Fetch drivers with full details
+    (async () => {
+      try {
+        const res = await fetch("/api/drivers");
+        const body = await res.json();
+        if (res.ok && body.data) {
+          setDrivers(body.data.map((d: any) => ({
+            ...d,
+            value: d.id,
+            label: d.name || d.id,
+          })));
+        }
+      } catch { /* ignore */ }
+    })();
   }, []);
 
   // ── Summary (over the loaded result set) ──
@@ -341,6 +354,7 @@ export function InvoiceManager() {
 
   const visible = tab === "all" ? rows : rows.filter((r) => r.status === tab);
   const vehicleById = useMemo(() => new Map(vehicles.map((v) => [v.value, v])), [vehicles]);
+  const driverById = useMemo(() => new Map(drivers.map((d) => [d.value, d])), [drivers]);
 
   // ── Live form totals ──
   const totals = useMemo(() => {
@@ -931,6 +945,49 @@ export function InvoiceManager() {
                 <VehicleDetailsPanel vehicle={vehicleById.get(form.vehicleId)} />
               </div>
             )}
+            {driverById.get(form.driverId) && (() => {
+              const dr = driverById.get(form.driverId)!;
+              return (
+                <div className="sm:col-span-3">
+                  <div className="rounded-lg border border-wood-100 bg-wood-50/70 px-4 py-3 text-xs">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <span className="font-bold text-gray-900">{dr.label}</span>
+                      <span className={dr.isActive === false
+                        ? "rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-bold text-gray-600"
+                        : "rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700"}>
+                        {dr.isActive === false ? "Inactive" : "Active"}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-4">
+                      {dr.phone && (
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Phone</p>
+                          <p className="mt-0.5 font-semibold text-gray-700">{dr.phone}</p>
+                        </div>
+                      )}
+                      {dr.licenseNumber && (
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">License No.</p>
+                          <p className="mt-0.5 font-semibold text-gray-700">{dr.licenseNumber}</p>
+                        </div>
+                      )}
+                      {dr.licenseExpiry && (
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">License Expiry</p>
+                          <p className="mt-0.5 font-semibold text-gray-700">{new Date(dr.licenseExpiry).toLocaleDateString("en-IN")}</p>
+                        </div>
+                      )}
+                      {dr.salary != null && dr.salary > 0 && (
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Monthly Salary</p>
+                          <p className="mt-0.5 font-bold text-green-700">₹{Number(dr.salary).toLocaleString("en-IN")}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
             <Field label="Invoice Number" required>
               <Input value={form.invoiceNumber} onChange={(e) => setForm((f) => ({ ...f, invoiceNumber: e.target.value }))} required />
             </Field>
