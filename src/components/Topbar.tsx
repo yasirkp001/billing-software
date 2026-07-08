@@ -20,6 +20,7 @@ const PAGE_TITLES: Record<string, string> = {
 };
 
 export function Topbar({
+  user,
   onMenu,
 }: {
   user: SessionUser;
@@ -47,22 +48,35 @@ export function Topbar({
 
   return (
     <>
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-wood-100/80 bg-white/90 px-4 backdrop-blur-sm lg:px-6 shadow-sm">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-100 bg-white px-4 lg:px-6 shadow-sm">
       {/* Left: hamburger + page title */}
       <div className="flex items-center gap-3">
         <button
           onClick={onMenu}
-          className="rounded-lg p-2 text-gray-500 hover:bg-wood-50 hover:text-wood-800 transition-colors lg:hidden"
+          className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors lg:hidden"
           aria-label="Open menu"
         >
           <Icon name="menu" size={20} />
         </button>
-        <h1 className="text-base font-semibold text-wood-900 tracking-tight">{pageTitle}</h1>
+        <div>
+          <h1 className="text-base font-bold text-gray-900 tracking-tight">{pageTitle}</h1>
+        </div>
       </div>
 
-      {/* Right: notifications + logout */}
-      <div className="flex items-center gap-3">
+      {/* Right: user info + notifications + logout */}
+      <div className="flex items-center gap-2">
         <NotificationBell />
+
+        {/* User avatar + name */}
+        <div className="hidden sm:flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-[11px] font-bold text-white">
+            {user.name?.charAt(0).toUpperCase() ?? "U"}
+          </div>
+          <span className="text-xs font-semibold text-gray-700">{user.name}</span>
+          {user.role === "admin" && (
+            <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-red-600">Admin</span>
+          )}
+        </div>
 
         {/* Logout */}
         <button
@@ -71,7 +85,7 @@ export function Topbar({
           className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm hover:bg-red-50 hover:border-red-200 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Icon name="logout" size={15} />
-          {loading ? "…" : "Logout"}
+          <span className="hidden sm:inline">{loading ? "…" : "Logout"}</span>
         </button>
       </div>
     </header>
