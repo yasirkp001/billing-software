@@ -146,9 +146,31 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
   const primaryVehicle = invoice.vehicle ?? invoice.lineItems?.find((li) => li.vehicle)?.vehicle ?? null;
   const hasLineItems = !!(invoice.lineItems && invoice.lineItems.length > 0);
   const showSubtotal = invoice.subtotal !== invoice.totalAmount;
-  const dieselTotal = expenses.filter((e) => e.category === "diesel").reduce((s, e) => s + e.amount, 0);
-  const fastagTotal = expenses.filter((e) => e.category === "fasttag").reduce((s, e) => s + e.amount, 0);
-  const policeTotal = expenses.filter((e) => e.category === "police").reduce((s, e) => s + e.amount, 0);
+  const invoiceExpenses = expenses.filter((e) =>
+    e.note?.includes(invoice.invoiceNumber)
+  );
+
+  const groupedExpenses = invoiceExpenses.reduce((acc, e) => {
+    const cat = e.category.toLowerCase().trim();
+    if (!acc[cat]) {
+      let label = e.category;
+      if (cat === "fasttag") label = "FASTag";
+      else if (cat === "diesel") label = "Diesel";
+      else if (cat === "police") label = "Police";
+      else label = e.category.charAt(0).toUpperCase() + e.category.slice(1);
+
+      acc[cat] = {
+        category: e.category,
+        amount: 0,
+        label,
+      };
+    }
+    acc[cat].amount += e.amount;
+    return acc;
+  }, {} as Record<string, { category: string; amount: number; label: string }>);
+
+  const expensesList = Object.values(groupedExpenses).filter((e) => e.amount > 0);
+  const totalExpensesAmount = expensesList.reduce((s, e) => s + e.amount, 0);
 
   const statusStyles: Record<string, string> = {
     paid: "bg-green-100 text-green-800 border-green-200",
@@ -306,7 +328,7 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
                   <th className="pb-2 text-left">Description</th>
                   <th className="pb-2 text-left">Vehicle</th>
                   <th className="pb-2 text-right">KM Start → End</th>
-                  <th className="pb-2 text-right">Days</th>
+                  <th className="pb-2 text-right">Ton/Day</th>
                   <th className="pb-2 text-right">Rate</th>
                   <th className="pb-2 text-right">Amount</th>
                 </tr>
@@ -353,35 +375,23 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
             </table>
           )}
 
-          {/* ══ VEHICLE EXPENSES (Diesel / FASTag / Police) ══ */}
-          {(dieselTotal > 0 || fastagTotal > 0 || policeTotal > 0) && (
+          {/* ══ VEHICLE EXPENSES ══ */}
+          {expensesList.length > 0 && (
             <>
               <div className="my-5 border-t border-gray-100" />
               <SectionHead title="Vehicle Expenses" />
               <div className="grid grid-cols-3 gap-3 mb-2">
-                {dieselTotal > 0 && (
-                  <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:'8px',padding:'10px 12px'}}>
-                    <p style={{fontSize:'9px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.08em',color:'#9ca3af',margin:0}}>Diesel</p>
-                    <p style={{fontSize:'14px',fontWeight:800,color:'#111827',margin:'2px 0 0'}}>{fmt(dieselTotal)}</p>
+                {expensesList.map((exp) => (
+                  <div key={exp.category} style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:'8px',padding:'10px 12px'}}>
+                    <p style={{fontSize:'9px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.08em',color:'#9ca3af',margin:0}}>{exp.label}</p>
+                    <p style={{fontSize:'14px',fontWeight:800,color:'#111827',margin:'2px 0 0'}}>{fmt(exp.amount)}</p>
                   </div>
-                )}
-                {fastagTotal > 0 && (
-                  <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:'8px',padding:'10px 12px'}}>
-                    <p style={{fontSize:'9px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.08em',color:'#9ca3af',margin:0}}>FASTag</p>
-                    <p style={{fontSize:'14px',fontWeight:800,color:'#111827',margin:'2px 0 0'}}>{fmt(fastagTotal)}</p>
-                  </div>
-                )}
-                {policeTotal > 0 && (
-                  <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:'8px',padding:'10px 12px'}}>
-                    <p style={{fontSize:'9px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.08em',color:'#9ca3af',margin:0}}>Police</p>
-                    <p style={{fontSize:'14px',fontWeight:800,color:'#111827',margin:'2px 0 0'}}>{fmt(policeTotal)}</p>
-                  </div>
-                )}
+                ))}
               </div>
               <div className="flex justify-end">
                 <div className="rounded-lg bg-gray-100 px-4 py-2 text-right">
                   <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Total Vehicle Expenses</p>
-                  <p className="text-base font-extrabold text-gray-900">{fmt(dieselTotal + fastagTotal + policeTotal)}</p>
+                  <p className="text-base font-extrabold text-gray-900">{fmt(totalExpensesAmount)}</p>
                 </div>
               </div>
             </>
@@ -399,6 +409,11 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
               {invoice.gstAmount > 0 && (
                 <div className="flex justify-between text-gray-500">
                   <span>GST ({invoice.gstPercentage}%)</span><span className="font-mono">{fmt(invoice.gstAmount)}</span>
+                </div>
+              )}
+              {totalExpensesAmount > 0 && (
+                <div className="flex justify-between text-gray-500">
+                  <span>Vehicle Expenses Deducted</span><span className="font-mono text-red-600">-{fmt(totalExpensesAmount)}</span>
                 </div>
               )}
               <div className="flex justify-between border-t border-gray-200 pt-1.5 text-base font-bold text-gray-900">

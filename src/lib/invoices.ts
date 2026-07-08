@@ -74,14 +74,15 @@ export function normalizeLineItems(raw: unknown): LineItem[] {
 export function computeTotals(
   lineItems: LineItem[],
   gstPercentage: unknown,
-  fallbackSubtotal: unknown
+  fallbackSubtotal: unknown,
+  totalExpenses: number = 0
 ) {
   const subtotal = lineItems.length
     ? round2(lineItems.reduce((s, li) => s + li.amount, 0))
     : round2(num(fallbackSubtotal));
   const gstPercent = num(gstPercentage);
   const gstAmount = round2((subtotal * gstPercent) / 100);
-  const totalAmount = round2(subtotal + gstAmount);
+  const totalAmount = round2(Math.max(subtotal + gstAmount - totalExpenses, 0));
   return { subtotal, gstPercent, gstAmount, totalAmount };
 }
 
@@ -101,10 +102,20 @@ export function deriveStatus(
  *  items. Totals are recomputed here, ignoring any client-sent values. */
 export function buildInvoiceData(body: Record<string, unknown>) {
   const lineItems = normalizeLineItems(body.lineItems);
+
+  const diesel = num(body.dieselAmount);
+  const fasttag = num(body.fastagAmount);
+  const police = num(body.policeAmount);
+  const custom = Array.isArray(body.customExpenses)
+    ? body.customExpenses.reduce((sum, ce: any) => sum + num(ce?.amount), 0)
+    : 0;
+  const totalExpenses = diesel + fasttag + police + custom;
+
   const { gstPercent, subtotal, gstAmount, totalAmount } = computeTotals(
     lineItems,
     body.gstPercentage,
-    body.subtotal
+    body.subtotal,
+    totalExpenses
   );
   const paidAmount = round2(num(body.paidAmount));
   const status = deriveStatus(String(body.status ?? ""), paidAmount, totalAmount);
