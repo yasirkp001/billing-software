@@ -51,6 +51,8 @@ export default async function DriverDetailPage({
   const totalBilled = invoices.reduce((s, inv) => s + inv.totalAmount, 0);
   const totalPaid = invoices.reduce((s, inv) => s + inv.paidAmount, 0);
   const totalBalance = totalBilled - totalPaid;
+  const DRIVER_PAY_PERCENT = 15;
+  const totalDriverPay = invoices.reduce((s, inv) => s + (inv.totalAmount * DRIVER_PAY_PERCENT) / 100, 0);
 
   return (
     <div className="space-y-5">
@@ -77,7 +79,7 @@ export default async function DriverDetailPage({
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          { label: "Total Trip Amount", value: money(totalTripAmount), icon: "wallet" as const, tone: "text-green-700", bg: "bg-green-100 text-green-600" },
+          { label: "Driver Pay (15%)", value: money(totalDriverPay), icon: "wallet" as const, tone: "text-green-700", bg: "bg-green-100 text-green-600" },
           { label: "Total Billed", value: money(totalBilled), icon: "revenue" as const, tone: "text-gray-700", bg: "bg-gray-100 text-gray-600" },
           { label: "Total Paid", value: money(totalPaid), icon: "outstanding" as const, tone: "text-green-700", bg: "bg-green-100 text-green-600" },
           { label: "Balance Due", value: money(totalBalance), icon: "overdue" as const, tone: totalBalance > 0 ? "text-red-700" : "text-gray-400", bg: totalBalance > 0 ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-400" },
@@ -141,6 +143,7 @@ export default async function DriverDetailPage({
                   <th className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Customer</th>
                   <th className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Vehicle</th>
                   <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Total</th>
+                  <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Driver Pay (15%)</th>
                   <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Paid</th>
                   <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Balance</th>
                   <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Status</th>
@@ -160,6 +163,9 @@ export default async function DriverDetailPage({
                       <td className="px-5 py-3 text-gray-700">{inv.customer?.name || "—"}</td>
                       <td className="px-5 py-3 font-semibold text-gray-700">{inv.vehicle?.registrationNumber || "—"}</td>
                       <td className="whitespace-nowrap px-5 py-3 text-right font-semibold text-gray-700">{money(inv.totalAmount)}</td>
+                      <td className="whitespace-nowrap px-5 py-3 text-right font-bold text-green-700">
+                        {money((inv.totalAmount * DRIVER_PAY_PERCENT) / 100)}
+                      </td>
                       <td className="whitespace-nowrap px-5 py-3 text-right font-bold text-green-700">{money(inv.paidAmount)}</td>
                       <td className="whitespace-nowrap px-5 py-3 text-right font-bold text-amber-700">{balance > 0 ? money(balance) : "—"}</td>
                       <td className="px-5 py-3 text-right"><StatusBadge status={inv.status} /></td>
@@ -171,6 +177,7 @@ export default async function DriverDetailPage({
                 <tr className="border-t-2 border-gray-200 bg-gray-50/70">
                   <td colSpan={3} className="px-5 py-3 text-right text-xs font-bold uppercase tracking-wider text-gray-500">Total</td>
                   <td className="whitespace-nowrap px-5 py-3 text-right font-extrabold text-gray-900">{money(totalBilled)}</td>
+                  <td className="whitespace-nowrap px-5 py-3 text-right font-extrabold text-green-700">{money(totalDriverPay)}</td>
                   <td className="whitespace-nowrap px-5 py-3 text-right font-extrabold text-green-700">{money(totalPaid)}</td>
                   <td className="whitespace-nowrap px-5 py-3 text-right font-extrabold text-amber-700">{totalBalance > 0 ? money(totalBalance) : "—"}</td>
                   <td />
