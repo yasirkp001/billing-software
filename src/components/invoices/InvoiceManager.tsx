@@ -1062,6 +1062,21 @@ export function InvoiceManager() {
               <div className="flex justify-between py-1 text-gray-600">
                 <span className="font-medium">Subtotal</span><span className="font-bold">{money(totals.subtotal, { decimals: true })}</span>
               </div>
+              {num(form.dieselAmount) > 0 && (
+                <div className="flex justify-between py-1 text-gray-500">
+                  <span className="font-medium">Diesel</span><span className="font-semibold">{money(num(form.dieselAmount), { decimals: true })}</span>
+                </div>
+              )}
+              {num(form.fastagAmount) > 0 && (
+                <div className="flex justify-between py-1 text-gray-500">
+                  <span className="font-medium">FASTag</span><span className="font-semibold">{money(num(form.fastagAmount), { decimals: true })}</span>
+                </div>
+              )}
+              {num(form.policeAmount) > 0 && (
+                <div className="flex justify-between py-1 text-gray-500">
+                  <span className="font-medium">Police</span><span className="font-semibold">{money(num(form.policeAmount), { decimals: true })}</span>
+                </div>
+              )}
               <div className="mt-1 flex justify-between border-t border-gray-200 pt-2 text-gray-900">
                 <span className="font-bold">Total</span><span className="text-base font-extrabold text-red-600">{money(totals.total, { decimals: true })}</span>
               </div>
