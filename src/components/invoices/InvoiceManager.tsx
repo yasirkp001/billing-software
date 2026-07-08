@@ -703,7 +703,7 @@ export function InvoiceManager() {
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/70">
-                  {["Invoice #", "Vehicle", "Total", "Paid", "Method", "Balance Due", "Check Balance", "Status"].map((h) => (
+                  {["Invoice #", "Vehicle", "Total", "Driver Pay (15%)", "Net Balance", "Paid", "Method", "Balance Due", "Check Balance", "Status"].map((h) => (
                     <th key={h} className="whitespace-nowrap px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">
                       {h}
                     </th>
@@ -765,6 +765,8 @@ export function InvoiceManager() {
                         )}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 font-bold text-gray-800">{money(inv.totalAmount)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 font-semibold text-blue-600">{money(inv.totalAmount * 0.15)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 font-bold text-green-700">{money(inv.totalAmount * 0.85)}</td>
                       <td className="whitespace-nowrap px-4 py-3 font-medium text-green-700">{money(inv.paidAmount)}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">
@@ -874,6 +876,18 @@ export function InvoiceManager() {
                       <span className="text-gray-500">Balance Due</span>
                       <span className={`font-bold ${balance > 0 ? "text-amber-700" : "text-gray-400"}`}>{balance > 0 ? money(balance) : "—"}</span>
                     </div>
+                    {inv.totalAmount > 0 && (
+                      <>
+                        <div className="flex justify-between border-t border-dashed border-gray-100 pt-1.5">
+                          <span className="text-gray-500">Driver Pay (15%)</span>
+                          <span className="font-semibold text-blue-600">{money(inv.totalAmount * 0.15)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium text-gray-700">Net Balance</span>
+                          <span className="font-extrabold text-green-700">{money(inv.totalAmount * 0.85)}</span>
+                        </div>
+                      </>
+                    )}
                     {isUpiPaid(inv) && (
                       <div className="flex justify-between">
                         <span className="text-gray-500">Check Balance (UPI)</span>
@@ -945,6 +959,49 @@ export function InvoiceManager() {
                 <VehicleDetailsPanel vehicle={vehicleById.get(form.vehicleId)} />
               </div>
             )}
+            {form.driverId && driverById.get(form.driverId) && (() => {
+              const dr = driverById.get(form.driverId)!;
+              return (
+                <div className="sm:col-span-3">
+                  <div className="rounded-lg border border-wood-100 bg-wood-50/70 px-4 py-3 text-xs">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <span className="font-bold text-gray-900">{dr.label}</span>
+                      <span className={dr.isActive === false
+                        ? "rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-bold text-gray-600"
+                        : "rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700"}>
+                        {dr.isActive === false ? "Inactive" : "Active"}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-4">
+                      {dr.phone && (
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Phone</p>
+                          <p className="mt-0.5 font-semibold text-gray-700">{dr.phone}</p>
+                        </div>
+                      )}
+                      {dr.licenseNumber && (
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">License No.</p>
+                          <p className="mt-0.5 font-semibold text-gray-700">{dr.licenseNumber}</p>
+                        </div>
+                      )}
+                      {dr.licenseExpiry && (
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">License Expiry</p>
+                          <p className="mt-0.5 font-semibold text-gray-700">{new Date(dr.licenseExpiry).toLocaleDateString("en-IN")}</p>
+                        </div>
+                      )}
+                      {dr.salary != null && dr.salary > 0 && (
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Monthly Salary</p>
+                          <p className="mt-0.5 font-bold text-green-700">₹{Number(dr.salary).toLocaleString("en-IN")}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
             <Field label="Invoice Number" required>
               <Input value={form.invoiceNumber} onChange={(e) => setForm((f) => ({ ...f, invoiceNumber: e.target.value }))} required />
             </Field>
