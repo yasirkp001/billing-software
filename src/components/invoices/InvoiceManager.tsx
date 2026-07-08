@@ -1246,8 +1246,26 @@ export function InvoiceManager() {
                     <span className="font-bold text-blue-600">{money(totals.total * 0.15, { decimals: true })}</span>
                   </div>
                   <div className="flex justify-between py-1">
-                    <span className="font-medium text-gray-600">After Driver Pay</span>
-                    <span className="font-bold text-red-600">{money(totals.total * 0.85, { decimals: true })}</span>
+                    <span className="font-medium text-gray-500 text-xs">Diesel + FASTag + Police</span>
+                    <span className="font-semibold text-gray-500">
+                      − {money(num(form.dieselAmount) + num(form.fastagAmount) + num(form.policeAmount), { decimals: true })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-t border-gray-200 pt-2 text-base">
+                    <span className="font-bold text-gray-800">Net Balance</span>
+                    <span className={`font-extrabold ${
+                      (totals.total - totals.total * 0.15 - num(form.dieselAmount) - num(form.fastagAmount) - num(form.policeAmount)) >= 0
+                        ? "text-green-700" : "text-red-600"
+                    }`}>
+                      {money(
+                        totals.total
+                        - totals.total * 0.15
+                        - num(form.dieselAmount)
+                        - num(form.fastagAmount)
+                        - num(form.policeAmount),
+                        { decimals: true }
+                      )}
+                    </span>
                   </div>
                 </>
               )}
