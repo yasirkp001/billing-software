@@ -945,49 +945,6 @@ export function InvoiceManager() {
                 <VehicleDetailsPanel vehicle={vehicleById.get(form.vehicleId)} />
               </div>
             )}
-            {driverById.get(form.driverId) && (() => {
-              const dr = driverById.get(form.driverId)!;
-              return (
-                <div className="sm:col-span-3">
-                  <div className="rounded-lg border border-wood-100 bg-wood-50/70 px-4 py-3 text-xs">
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span className="font-bold text-gray-900">{dr.label}</span>
-                      <span className={dr.isActive === false
-                        ? "rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-bold text-gray-600"
-                        : "rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700"}>
-                        {dr.isActive === false ? "Inactive" : "Active"}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-4">
-                      {dr.phone && (
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Phone</p>
-                          <p className="mt-0.5 font-semibold text-gray-700">{dr.phone}</p>
-                        </div>
-                      )}
-                      {dr.licenseNumber && (
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">License No.</p>
-                          <p className="mt-0.5 font-semibold text-gray-700">{dr.licenseNumber}</p>
-                        </div>
-                      )}
-                      {dr.licenseExpiry && (
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">License Expiry</p>
-                          <p className="mt-0.5 font-semibold text-gray-700">{new Date(dr.licenseExpiry).toLocaleDateString("en-IN")}</p>
-                        </div>
-                      )}
-                      {dr.salary != null && dr.salary > 0 && (
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Monthly Salary</p>
-                          <p className="mt-0.5 font-bold text-green-700">₹{Number(dr.salary).toLocaleString("en-IN")}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
             <Field label="Invoice Number" required>
               <Input value={form.invoiceNumber} onChange={(e) => setForm((f) => ({ ...f, invoiceNumber: e.target.value }))} required />
             </Field>
@@ -1279,6 +1236,18 @@ export function InvoiceManager() {
                   <div className="flex justify-between py-1 text-gray-500">
                     <span className="font-medium">Balance Due</span>
                     <span className="font-bold text-amber-700">{money(Math.max(totals.total - num(form.paidAmount), 0), { decimals: true })}</span>
+                  </div>
+                </>
+              )}
+              {totals.total > 0 && (
+                <>
+                  <div className="mt-1 flex justify-between border-t border-dashed border-gray-200 pt-2 text-gray-600">
+                    <span className="font-medium">Driver Pay (15%)</span>
+                    <span className="font-bold text-blue-600">{money(totals.total * 0.15, { decimals: true })}</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="font-medium text-gray-600">After Driver Pay</span>
+                    <span className="font-bold text-red-600">{money(totals.total * 0.85, { decimals: true })}</span>
                   </div>
                 </>
               )}
