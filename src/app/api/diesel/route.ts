@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import { ok, handleError, requireAuth } from "@/lib/api";
 
+export const dynamic = "force-dynamic";
+
 /** List all diesel expense and payment entries */
 export async function GET() {
   const auth = await requireAuth();

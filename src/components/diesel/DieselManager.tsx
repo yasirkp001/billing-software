@@ -20,6 +20,7 @@ type DieselEntry = {
   paid: number;
   adblue: number;
   note: string;
+  createdAt?: string;
   vehicle?: { id: string; registrationNumber: string; type: string } | null;
 };
 
@@ -71,9 +72,9 @@ export function DieselManager() {
           const timeDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
           if (timeDiff !== 0) return timeDiff;
 
-          const aIsPaymentOnly = a.amount === 0 && (a.paid ?? 0) > 0;
-          const bIsPaymentOnly = b.amount === 0 && (b.paid ?? 0) > 0;
-          if (aIsPaymentOnly !== bIsPaymentOnly) return aIsPaymentOnly ? 1 : -1;
+          const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          if (timeB !== timeA) return timeB - timeA;
 
           return b.id.localeCompare(a.id);
         });
@@ -267,7 +268,7 @@ export function DieselManager() {
                   const bal = e.amount - (e.paid ?? 0);
                   const paymentMatch = e.note?.match(/Payment: (\w+)/i);
                   const paymentMethod = paymentMatch ? paymentMatch[1] : "";
-                  const isGeneral = e.note?.startsWith("[GENERAL]");
+                  const isGeneral = e.note?.includes("[GENERAL]");
 
                   return (
                     <tr key={e.id} className="hover:bg-gray-50/60">
@@ -275,7 +276,7 @@ export function DieselManager() {
                       <td className="whitespace-nowrap px-4 py-3 text-gray-500">{formatDate(e.date)}</td>
                       <td className="px-4 py-3">
                         {isGeneral ? (
-                          <span className="text-sm font-semibold text-gray-400">General</span>
+                          <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-700 uppercase tracking-wider">Paid</span>
                         ) : (
                           <Link href={`/vehicles/${e.vehicleId}`} className="font-bold text-red-600 hover:underline">
                             {e.vehicle?.registrationNumber ?? "—"}
