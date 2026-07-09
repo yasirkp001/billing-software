@@ -257,8 +257,7 @@ export function DieselManager() {
                   <td className="px-4 py-3 text-right text-purple-700">{money(totalAmount)}</td>
                   <td className="px-4 py-3 text-right text-blue-600">{totalAdblue > 0 ? `${totalAdblue} L` : "—"}</td>
                   <td className="px-4 py-3 text-right text-green-700">{money(totalPaid)}</td>
-                  <td className="px-4 py-3 text-right text-amber-700">{totalBalance > 0 ? money(totalBalance) : "—"}</td>
-                  <td />
+                  <td colSpan={2} />
                 </tr>
               </tfoot>
             </table>
