@@ -65,13 +65,17 @@ export function DieselManager() {
       if (vBody.data) {
         setVehicles(vBody.data);
         // Fetch diesel expenses for all vehicles in parallel
+        // Exclude general entries (marked with [GENERAL]) from vehicle loads
         const vehicleExpenses = await Promise.all(
           vBody.data.map((v: Vehicle) =>
             fetch(`/api/vehicles/${v.id}/expenses`)
               .then((r) => r.json())
               .then((b) =>
                 (b.data || [])
-                  .filter((e: DieselEntry) => e.category === "diesel")
+                  .filter((e: DieselEntry) => 
+                    e.category === "diesel" && 
+                    !e.note?.startsWith("[GENERAL]")
+                  )
                   .map((e: DieselEntry) => ({ ...e, vehicle: v }))
               )
               .catch(() => [])
