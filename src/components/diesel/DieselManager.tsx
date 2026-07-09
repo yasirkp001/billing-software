@@ -235,7 +235,16 @@ export function DieselManager() {
             <h3 className="text-sm font-bold text-gray-900">All Diesel Entries</h3>
             <p className="mt-0.5 text-xs text-gray-400">{entries.length} records</p>
           </div>
-          <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">{money(totalAmount)}</span>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">{money(totalAmount)}</span>
+            <a
+              href="/diesel/print"
+              target="_blank"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200 transition-colors"
+            >
+              🖨️ PDF
+            </a>
+          </div>
         </div>
         {loading ? (
           <div className="flex items-center justify-center py-10">
