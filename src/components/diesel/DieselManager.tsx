@@ -91,7 +91,7 @@ export function DieselManager() {
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!vehicleId) { setError("Select a vehicle."); return; }
+    
     const amt = amount === "" ? 0 : Number(amount);
     const paidAmt = paid === "" ? 0 : Number(paid);
     
@@ -102,6 +102,14 @@ export function DieselManager() {
       setError("Enter amount or paid value."); 
       return; 
     }
+    
+    // If no vehicle selected, use first available vehicle
+    const targetVehicleId = vehicleId || (vehicles.length > 0 ? vehicles[0].id : null);
+    if (!targetVehicleId) {
+      setError("No vehicles available. Please add a vehicle first.");
+      return;
+    }
+    
     setSaving(true);
     try {
       const paidAmount = paid === "" ? 0 : Number(paid);
@@ -109,7 +117,7 @@ export function DieselManager() {
         ? `Payment: ${paymentMethod.toUpperCase()}${note ? ` | ${note}` : ''}`
         : note;
         
-      const res = await fetch(`/api/vehicles/${vehicleId}/expenses`, {
+      const res = await fetch(`/api/vehicles/${targetVehicleId}/expenses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
