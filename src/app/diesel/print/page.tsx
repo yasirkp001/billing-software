@@ -7,6 +7,7 @@ type DieselEntry = {
   id: string;
   date: string;
   vehicleId: string;
+  category?: string;
   amount: number;
   adblue: number;
   paid: number;
@@ -23,12 +24,13 @@ export default function DieselPrintPage() {
     async function load() {
       try {
         const vRes = await fetch("/api/vehicles");
+        if (!vRes.ok) { setLoading(false); return; }
         const vBody = await vRes.json();
         if (vBody.data) {
           const vehicleExpenses = await Promise.all(
             vBody.data.map((v: { id: string; registrationNumber: string }) =>
               fetch(`/api/vehicles/${v.id}/expenses`)
-                .then((r) => r.json())
+                .then((r) => r.ok ? r.json() : { data: [] })
                 .then((b) =>
                   (b.data || [])
                     .filter((e: DieselEntry) =>
@@ -41,8 +43,7 @@ export default function DieselPrintPage() {
             )
           );
           const generalRes = await fetch("/api/diesel/general");
-          const generalBody = await generalRes.json();
-          const generalEntries = generalBody.data || [];
+          const generalEntries = generalRes.ok ? (await generalRes.json()).data || [] : [];
           const combined = [...vehicleExpenses.flat(), ...generalEntries];
           const uniqueMap = new Map();
           combined.forEach((e) => uniqueMap.set(e.id, e));
@@ -51,7 +52,9 @@ export default function DieselPrintPage() {
           );
           setEntries(all);
         }
-      } catch { /* ignore */ }
+      } catch (err) {
+        console.error("Load error:", err);
+      }
       setLoading(false);
     }
     load();
