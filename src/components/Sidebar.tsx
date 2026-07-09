@@ -19,6 +19,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { href: "/drivers", label: "Drivers", icon: "drivers" },
       { href: "/bookings", label: "Bookings", icon: "bookings" },
       { href: "/trip-sheets", label: "Trip Sheets", icon: "trip-sheets" },
+      { href: "/diesel", label: "Diesel", icon: "expenses" },
     ],
   },
   {
