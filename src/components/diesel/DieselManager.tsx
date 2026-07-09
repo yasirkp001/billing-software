@@ -65,7 +65,7 @@ export function DieselManager() {
       if (vBody.data) {
         setVehicles(vBody.data);
         // Fetch diesel expenses for all vehicles in parallel
-        const results = await Promise.all(
+        const vehicleExpenses = await Promise.all(
           vBody.data.map((v: Vehicle) =>
             fetch(`/api/vehicles/${v.id}/expenses`)
               .then((r) => r.json())
@@ -77,7 +77,14 @@ export function DieselManager() {
               .catch(() => [])
           )
         );
-        const all = results.flat().sort(
+        
+        // Fetch general diesel entries
+        const generalRes = await fetch("/api/diesel/general");
+        const generalBody = await generalRes.json();
+        const generalEntries = generalBody.data || [];
+        
+        // Combine vehicle-specific and general entries
+        const all = [...vehicleExpenses.flat(), ...generalEntries].sort(
           (a: DieselEntry, b: DieselEntry) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
         setEntries(all);
