@@ -87,8 +87,14 @@ export function DieselManager() {
         const generalBody = await generalRes.json();
         const generalEntries = generalBody.data || [];
         
-        // Combine vehicle-specific and general entries
-        const all = [...vehicleExpenses.flat(), ...generalEntries].sort(
+        // Combine and deduplicate by ID
+        const combined = [...vehicleExpenses.flat(), ...generalEntries];
+        const uniqueMap = new Map();
+        combined.forEach((entry) => {
+          uniqueMap.set(entry.id, entry);
+        });
+        
+        const all = Array.from(uniqueMap.values()).sort(
           (a: DieselEntry, b: DieselEntry) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
         setEntries(all);
