@@ -191,7 +191,7 @@ export function DieselManager() {
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </Field>
             <Field label="Vehicle No" className="sm:col-span-2">
-              <Select value={vehicleId} onChange={(e) => setVehicleId(e.target.value)} required>
+              <Select value={vehicleId} onChange={(e) => setVehicleId(e.target.value)} autoComplete="off">
                 <option value="">— Select Vehicle —</option>
                 {vehicles.map((v) => (
                   <option key={v.id} value={v.id}>{v.registrationNumber}</option>
