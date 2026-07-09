@@ -267,10 +267,12 @@ export function DieselManager() {
                   const bal = e.amount - (e.paid ?? 0);
                   const paymentMatch = e.note?.match(/Payment: (\w+)/i);
                   const paymentMethod = paymentMatch ? paymentMatch[1] : "";
+                  // Default to "Cash" for old entries with paid amount but no payment method
+                  const displayPaymentMethod = paymentMethod || ((e.paid ?? 0) > 0 ? "Cash" : "");
                   const isGeneral = e.note?.includes("[GENERAL]");
 
                   return (
-                    <tr key={e.id} className="hover:bg-gray-50/60">
+                    <tr key={e.id} className="hover:bg-gray-50/60 align-top">
                       <td className="px-4 py-3 text-xs text-gray-400">{idx + 1}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-gray-500">{formatDate(e.date)}</td>
                       <td className="px-4 py-3">
@@ -287,9 +289,9 @@ export function DieselManager() {
                       <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-green-700">{(e.paid ?? 0) > 0 ? money(e.paid) : "—"}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-amber-700">{bal > 0 ? money(bal) : "—"}</td>
                       <td className="px-4 py-3 text-xs text-gray-600">
-                        {paymentMethod && (
+                        {displayPaymentMethod && (
                           <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
-                            {paymentMethod}
+                            {displayPaymentMethod}
                           </span>
                         )}
                       </td>
