@@ -70,5 +70,6 @@ export default function DriversPage() {
       columns={columns}
       fields={fields}
       searchPlaceholder="Search by name, phone, license…"
+      rowHref={(r) => `/drivers/${r.id}`}
     />
   );}
