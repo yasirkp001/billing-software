@@ -103,21 +103,19 @@ export function DieselManager() {
       return; 
     }
     
-    // If no vehicle selected, use first available vehicle
-    const targetVehicleId = vehicleId || (vehicles.length > 0 ? vehicles[0].id : null);
-    if (!targetVehicleId) {
-      setError("No vehicles available. Please add a vehicle first.");
-      return;
-    }
-    
     setSaving(true);
     try {
       const paidAmount = paid === "" ? 0 : Number(paid);
       const noteWithPayment = paidAmount > 0 
         ? `Payment: ${paymentMethod.toUpperCase()}${note ? ` | ${note}` : ''}`
         : note;
+      
+      // Use general API if no vehicle selected, otherwise vehicle-specific API
+      const apiUrl = vehicleId 
+        ? `/api/vehicles/${vehicleId}/expenses`
+        : `/api/diesel/general`;
         
-      const res = await fetch(`/api/vehicles/${targetVehicleId}/expenses`, {
+      const res = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -265,15 +263,20 @@ export function DieselManager() {
                   // Extract payment method from note
                   const paymentMatch = e.note?.match(/Payment: (\w+)/i);
                   const paymentMethod = paymentMatch ? paymentMatch[1] : "";
+                  const isGeneral = e.note?.startsWith("[GENERAL]");
                   
                   return (
                     <tr key={e.id} className="hover:bg-gray-50/60">
                       <td className="px-4 py-3 text-xs text-gray-400">{entries.length - idx}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-gray-500">{formatDate(e.date)}</td>
                       <td className="px-4 py-3">
-                        <Link href={`/vehicles/${e.vehicleId}`} className="font-bold text-red-600 hover:underline">
-                          {e.vehicle?.registrationNumber ?? "—"}
-                        </Link>
+                        {isGeneral ? (
+                          <span className="text-sm font-semibold text-gray-400">General</span>
+                        ) : (
+                          <Link href={`/vehicles/${e.vehicleId}`} className="font-bold text-red-600 hover:underline">
+                            {e.vehicle?.registrationNumber ?? "—"}
+                          </Link>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-purple-700">{money(e.amount)}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right text-blue-600">{(e.adblue ?? 0) > 0 ? `${e.adblue} L` : "—"}</td>
