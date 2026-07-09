@@ -6,7 +6,6 @@ import { Icon } from "@/components/ui/Icon";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { money, formatDate } from "@/lib/format";
-import Link from "next/link";
 
 type Vehicle = { id: string; registrationNumber: string; type: string };
 type DieselEntry = {
@@ -278,9 +277,9 @@ export function DieselManager() {
                         {isGeneral ? (
                           <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-700 uppercase tracking-wider">Paid</span>
                         ) : (
-                          <Link href={`/vehicles/${e.vehicleId}`} className="font-bold text-red-600 hover:underline">
+                          <span className="font-bold text-red-600">
                             {e.vehicle?.registrationNumber ?? "—"}
-                          </Link>
+                          </span>
                         )}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-purple-700">{e.amount > 0 ? money(e.amount) : "—"}</td>
