@@ -93,6 +93,9 @@ export function DieselManager() {
     if (!vehicleId) { setError("Select a vehicle."); return; }
     const amt = amount === "" ? 0 : Number(amount);
     const paidAmt = paid === "" ? 0 : Number(paid);
+    
+    console.log("Validation:", { amt, paidAmt, amount, paid });
+    
     // Allow entry with either amount or paid (or both)
     if (amt <= 0 && paidAmt <= 0) { 
       setError("Enter amount or paid value."); 

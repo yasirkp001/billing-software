@@ -32,7 +32,16 @@ export async function POST(req: Request, ctx: Ctx) {
 
     const body = await req.json();
     const amount = Number(body.amount);
-    if (!Number.isFinite(amount) || amount <= 0) return fail("Enter a valid amount.");
+    const paid = Number(body.paid) || 0;
+    
+    // Allow entry with either amount or paid (or both)
+    if ((!Number.isFinite(amount) || amount < 0) && paid <= 0) {
+      return fail("Enter a valid amount or paid value.");
+    }
+    if (!Number.isFinite(amount) || amount < 0) {
+      // If amount is invalid but paid is valid, set amount to 0
+      body.amount = 0;
+    }
 
     const category = String(body.category ?? "other").trim() || "other";
     const d = body.date ? new Date(body.date) : new Date();
@@ -40,7 +49,7 @@ export async function POST(req: Request, ctx: Ctx) {
     const row = await prisma.vehicleExpense.create({
       data: {
         vehicleId: id,
-        amount,
+        amount: Number(body.amount) || 0,
         category,
         date: Number.isNaN(d.getTime()) ? new Date() : d,
         note: String(body.note ?? "").trim(),
