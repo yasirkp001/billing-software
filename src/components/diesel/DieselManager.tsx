@@ -254,6 +254,7 @@ export function DieselManager() {
                   <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">No</th>
                   <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Date</th>
                   <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Vehicle No</th>
+                  <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Prev Balance</th>
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Amount</th>
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Adblue</th>
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Paid</th>
@@ -266,6 +267,7 @@ export function DieselManager() {
                 {(() => {
                   let runningBalance = 0;
                   return entries.map((e, idx) => {
+                    const prevBalance = runningBalance;
                     // Calculate cumulative balance
                     runningBalance += e.amount - (e.paid ?? 0);
                     
@@ -287,6 +289,7 @@ export function DieselManager() {
                             </span>
                           )}
                         </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-gray-500">{money(prevBalance)}</td>
                         <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-purple-700">{e.amount > 0 ? money(e.amount) : "—"}</td>
                         <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-blue-600">{(e.adblue ?? 0) > 0 ? money(e.adblue) : "—"}</td>
                         <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-green-700">{(e.paid ?? 0) > 0 ? money(e.paid) : "—"}</td>
@@ -308,7 +311,7 @@ export function DieselManager() {
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-gray-200 bg-gray-50/70 font-bold">
-                  <td colSpan={3} className="px-4 py-3 text-right text-xs uppercase tracking-wider text-gray-500">Total</td>
+                  <td colSpan={4} className="px-4 py-3 text-right text-xs uppercase tracking-wider text-gray-500">Total</td>
                   <td className="px-4 py-3 text-right text-purple-700">{money(totalAmount)}</td>
                   <td className="px-4 py-3 text-right text-blue-600">{money(totalAdblue)}</td>
                   <td className="px-4 py-3 text-right text-green-700">{money(totalPaid)}</td>
