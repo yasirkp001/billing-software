@@ -782,8 +782,8 @@ export function InvoiceManager() {
                         )}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 font-bold text-gray-800">{money(inv.totalAmount)}</td>
-                      <td className="whitespace-nowrap px-4 py-3 font-semibold text-blue-600">{money(inv.totalAmount * 0.15)}</td>
-                      <td className="whitespace-nowrap px-4 py-3 font-bold text-green-700">{money(inv.totalAmount * 0.85)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 font-semibold text-blue-600">{money(inv.subtotal * 0.15)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 font-bold text-green-700">{money(inv.subtotal * 0.85)}</td>
                       <td className="whitespace-nowrap px-4 py-3 font-medium text-green-700">{money(inv.paidAmount)}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">
@@ -897,11 +897,11 @@ export function InvoiceManager() {
                       <>
                         <div className="flex justify-between border-t border-dashed border-gray-100 pt-1.5">
                           <span className="text-gray-500">Driver Pay (15%)</span>
-                          <span className="font-semibold text-blue-600">{money(inv.totalAmount * 0.15)}</span>
+                          <span className="font-semibold text-blue-600">{money(inv.subtotal * 0.15)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="font-medium text-gray-700">Net Balance</span>
-                          <span className="font-extrabold text-green-700">{money(inv.totalAmount * 0.85)}</span>
+                          <span className="font-extrabold text-green-700">{money(inv.subtotal * 0.85)}</span>
                         </div>
                       </>
                     )}
@@ -1315,10 +1315,10 @@ export function InvoiceManager() {
                 <>
                   <div className="mt-1 flex justify-between border-t border-dashed border-gray-200 pt-2 text-gray-600">
                     <span className="font-medium">Driver Pay (15%)</span>
-                    <span className="font-bold text-blue-600">{money(totals.total * 0.15, { decimals: true })}</span>
+                    <span className="font-bold text-blue-600">{money(totals.subtotal * 0.15, { decimals: true })}</span>
                   </div>
-                  <div className="flex justify-between py-1">
-                    <span className="font-medium text-gray-500 text-xs">Diesel + FASTag + Police</span>
+                  <div className="flex justify-between py-1 text-xs">
+                    <span className="font-medium text-gray-500">Diesel + FASTag + Police</span>
                     <span className="font-semibold text-gray-500">
                       − {money(num(form.dieselAmount) + num(form.fastagAmount) + num(form.policeAmount), { decimals: true })}
                     </span>
@@ -1326,12 +1326,12 @@ export function InvoiceManager() {
                   <div className="flex justify-between border-t border-gray-200 pt-2 text-base">
                     <span className="font-bold text-gray-800">Net Balance</span>
                     <span className={`font-extrabold ${
-                      (totals.total - totals.total * 0.15 - num(form.dieselAmount) - num(form.fastagAmount) - num(form.policeAmount)) >= 0
+                      (totals.subtotal - totals.subtotal * 0.15 - num(form.dieselAmount) - num(form.fastagAmount) - num(form.policeAmount)) >= 0
                         ? "text-green-700" : "text-red-600"
                     }`}>
                       {money(
-                        totals.total
-                        - totals.total * 0.15
+                        totals.subtotal
+                        - totals.subtotal * 0.15
                         - num(form.dieselAmount)
                         - num(form.fastagAmount)
                         - num(form.policeAmount),

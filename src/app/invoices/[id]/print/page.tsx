@@ -435,7 +435,7 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
                 <>
                   <div className="flex justify-between border-t border-dashed border-gray-200 pt-2 text-gray-600">
                     <span className="font-medium">Driver Pay (15%)</span>
-                    <span className="font-mono font-semibold text-blue-600">{fmt(invoice.totalAmount * 0.15)}</span>
+                    <span className="font-mono font-semibold text-blue-600">{fmt(invoice.subtotal * 0.15)}</span>
                   </div>
                   {(dieselTotal > 0 || fastagTotal > 0 || policeTotal > 0) && (
                     <div className="flex justify-between text-gray-500">
@@ -446,8 +446,8 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
                   <div className="flex justify-between border-t border-gray-200 pt-1.5 text-base font-extrabold text-green-700">
                     <span>Net Balance</span>
                     <span className="font-mono">{fmt(
-                      invoice.totalAmount
-                      - invoice.totalAmount * 0.15
+                      invoice.subtotal
+                      - invoice.subtotal * 0.15
                       - dieselTotal - fastagTotal - policeTotal
                     )}</span>
                   </div>

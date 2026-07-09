@@ -52,7 +52,7 @@ export default async function DriverDetailPage({
   const totalPaid = invoices.reduce((s, inv) => s + inv.paidAmount, 0);
   const totalBalance = totalBilled - totalPaid;
   const DRIVER_PAY_PERCENT = 15;
-  const totalDriverPay = invoices.reduce((s, inv) => s + (inv.totalAmount * DRIVER_PAY_PERCENT) / 100, 0);
+  const totalDriverPay = invoices.reduce((s, inv) => s + (inv.subtotal * DRIVER_PAY_PERCENT) / 100, 0);
 
   return (
     <div className="space-y-5">
@@ -164,7 +164,7 @@ export default async function DriverDetailPage({
                       <td className="px-5 py-3 font-semibold text-gray-700">{inv.vehicle?.registrationNumber || "—"}</td>
                       <td className="whitespace-nowrap px-5 py-3 text-right font-semibold text-gray-700">{money(inv.totalAmount)}</td>
                       <td className="whitespace-nowrap px-5 py-3 text-right font-bold text-green-700">
-                        {money((inv.totalAmount * DRIVER_PAY_PERCENT) / 100)}
+                        {money((inv.subtotal * DRIVER_PAY_PERCENT) / 100)}
                       </td>
                       <td className="whitespace-nowrap px-5 py-3 text-right font-bold text-green-700">{money(inv.paidAmount)}</td>
                       <td className="whitespace-nowrap px-5 py-3 text-right font-bold text-amber-700">{balance > 0 ? money(balance) : "—"}</td>
