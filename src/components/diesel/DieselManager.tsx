@@ -263,44 +263,48 @@ export function DieselManager() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {entries.map((e, idx) => {
-                  const bal = e.amount - (e.paid ?? 0);
-                  const paymentMatch = e.note?.match(/Payment: (\w+)/i);
-                  const paymentMethod = paymentMatch ? paymentMatch[1] : "";
-                  // Default to "Cash" for old entries with paid amount but no payment method
-                  const displayPaymentMethod = paymentMethod || ((e.paid ?? 0) > 0 ? "Cash" : "");
-                  const isGeneral = e.note?.includes("[GENERAL]");
+                {(() => {
+                  let runningBalance = 0;
+                  return entries.map((e, idx) => {
+                    // Calculate cumulative balance
+                    runningBalance += e.amount - (e.paid ?? 0);
+                    
+                    const paymentMatch = e.note?.match(/Payment: (\w+)/i);
+                    const paymentMethod = paymentMatch ? paymentMatch[1] : "";
+                    const displayPaymentMethod = paymentMethod || ((e.paid ?? 0) > 0 ? "Cash" : "");
+                    const isGeneral = e.note?.includes("[GENERAL]");
 
-                  return (
-                    <tr key={e.id} className="hover:bg-gray-50/60 align-top">
-                      <td className="px-4 py-3 text-xs text-gray-400">{entries.length - idx}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-gray-500">{formatDate(e.date)}</td>
-                      <td className="px-4 py-3">
-                        {isGeneral ? (
-                          <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-700 uppercase tracking-wider">Paid</span>
-                        ) : (
-                          <span className="font-bold text-red-600">
-                            {e.vehicle?.registrationNumber ?? "—"}
-                          </span>
-                        )}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-purple-700">{e.amount > 0 ? money(e.amount) : "—"}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right text-blue-600">{(e.adblue ?? 0) > 0 ? `${e.adblue} L` : "—"}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-green-700">{(e.paid ?? 0) > 0 ? money(e.paid) : "—"}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-amber-700">{bal > 0 ? money(bal) : "—"}</td>
-                      <td className="px-4 py-3 text-xs text-gray-600">
-                        {displayPaymentMethod && (
-                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
-                            {displayPaymentMethod}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button onClick={() => handleDelete(e)} className="text-gray-300 hover:text-red-500 transition-colors" aria-label="Delete">✕</button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                    return (
+                      <tr key={e.id} className="hover:bg-gray-50/60 align-top">
+                        <td className="px-4 py-3 text-xs text-gray-400">{entries.length - idx}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-gray-500">{formatDate(e.date)}</td>
+                        <td className="px-4 py-3">
+                          {isGeneral ? (
+                            <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-700 uppercase tracking-wider">Paid</span>
+                          ) : (
+                            <span className="font-bold text-red-600">
+                              {e.vehicle?.registrationNumber ?? "—"}
+                            </span>
+                          )}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-purple-700">{e.amount > 0 ? money(e.amount) : "—"}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-blue-600">{(e.adblue ?? 0) > 0 ? `${e.adblue} L` : "—"}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-green-700">{(e.paid ?? 0) > 0 ? money(e.paid) : "—"}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right font-extrabold text-red-700">{money(runningBalance)}</td>
+                        <td className="px-4 py-3 text-xs text-gray-600">
+                          {displayPaymentMethod && (
+                            <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                              {displayPaymentMethod}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button onClick={() => handleDelete(e)} className="text-gray-300 hover:text-red-500 transition-colors" aria-label="Delete">✕</button>
+                        </td>
+                      </tr>
+                    );
+                  });
+                })()}
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-gray-200 bg-gray-50/70 font-bold">
