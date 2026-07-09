@@ -157,9 +157,9 @@ export function DieselManager() {
 
   const totalAmount = entries.reduce((s, e) => s + e.amount, 0);
   const totalPaid = entries.reduce((s, e) => s + (e.paid ?? 0), 0);
-  const totalBalance = totalAmount - totalPaid;
   const totalLiter = entries.reduce((s, e) => s + (e.liter ?? 0), 0);
   const totalAdblue = entries.reduce((s, e) => s + (e.adblue ?? 0), 0);
+  const totalBalance = totalAmount + totalAdblue - totalPaid;
 
 
   return (
@@ -273,7 +273,7 @@ export function DieselManager() {
                   const balanceMap = new Map<string, { prev: number; current: number }>();
                   entriesWithBalance.forEach((e) => {
                     const prev = runningBalance;
-                    runningBalance += e.amount - (e.paid ?? 0);
+                    runningBalance += e.amount + (e.adblue ?? 0) - (e.paid ?? 0);
                     balanceMap.set(e.id, { prev, current: runningBalance });
                   });
 
