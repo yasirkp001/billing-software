@@ -273,7 +273,7 @@ export function DieselManager() {
 
                   return (
                     <tr key={e.id} className="hover:bg-gray-50/60 align-top">
-                      <td className="px-4 py-3 text-xs text-gray-400">{idx + 1}</td>
+                      <td className="px-4 py-3 text-xs text-gray-400">{entries.length - idx}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-gray-500">{formatDate(e.date)}</td>
                       <td className="px-4 py-3">
                         {isGeneral ? (
