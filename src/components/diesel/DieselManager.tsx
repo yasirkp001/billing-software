@@ -258,7 +258,6 @@ export function DieselManager() {
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Adblue</th>
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Paid</th>
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Balance</th>
-                  <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Running Balance</th>
                   <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Payment</th>
                   <th className="px-4 py-2.5" />
                 </tr>
@@ -266,10 +265,6 @@ export function DieselManager() {
               <tbody className="divide-y divide-gray-50">
                 {entries.map((e, idx) => {
                   const bal = e.amount - (e.paid ?? 0);
-                  // Calculate running balance (cumulative)
-                  const runningBalance = entries.slice(0, idx + 1).reduce((sum, entry) => {
-                    return sum + entry.amount - (entry.paid ?? 0);
-                  }, 0);
                   const paymentMatch = e.note?.match(/Payment: (\w+)/i);
                   const paymentMethod = paymentMatch ? paymentMatch[1] : "";
                   // Default to "Cash" for old entries with paid amount but no payment method
@@ -293,7 +288,6 @@ export function DieselManager() {
                       <td className="whitespace-nowrap px-4 py-3 text-right text-blue-600">{(e.adblue ?? 0) > 0 ? `${e.adblue} L` : "—"}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-green-700">{(e.paid ?? 0) > 0 ? money(e.paid) : "—"}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-amber-700">{bal > 0 ? money(bal) : "—"}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right font-extrabold text-red-700">{money(runningBalance)}</td>
                       <td className="px-4 py-3 text-xs text-gray-600">
                         {displayPaymentMethod && (
                           <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
@@ -315,7 +309,6 @@ export function DieselManager() {
                   <td className="px-4 py-3 text-right text-blue-600">{totalAdblue > 0 ? `${totalAdblue} L` : "—"}</td>
                   <td className="px-4 py-3 text-right text-green-700">{money(totalPaid)}</td>
                   <td className="px-4 py-3 text-right text-amber-700">{totalBalance > 0 ? money(totalBalance) : "—"}</td>
-                  <td className="px-4 py-3 text-right text-red-700">{money(totalBalance)}</td>
                   <td colSpan={2} />
                 </tr>
               </tfoot>
