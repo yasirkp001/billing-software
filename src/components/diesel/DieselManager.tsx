@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
 import { Button } from "@/components/ui/Button";
@@ -13,6 +13,7 @@ type DieselEntry = {
   id: string;
   date: string;
   vehicleId: string;
+  category: string;
   amount: number;
   liter: number;
   pricePerLiter: number;
@@ -32,8 +33,6 @@ export function DieselManager() {
 
   // Form state
   const [vehicleId, setVehicleId] = useState("");
-  const [liter, setLiter] = useState("");
-  const [pricePerLiter, setPricePerLiter] = useState("");
   const [amount, setAmount] = useState("");
   const [paid, setPaid] = useState("");
   const [adblue, setAdblue] = useState("");
@@ -41,13 +40,6 @@ export function DieselManager() {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
-  // Auto-calc amount from liter × price
-  useEffect(() => {
-    const l = Number(liter);
-    const p = Number(pricePerLiter);
-    if (l > 0 && p > 0) setAmount(String(Math.round(l * p)));
-  }, [liter, pricePerLiter]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -111,8 +103,8 @@ export function DieselManager() {
           amount: amt,
           date,
           note,
-          liter: Number(liter) || 0,
-          pricePerLiter: Number(pricePerLiter) || 0,
+          liter: 0,
+          pricePerLiter: 0,
           paid: Number(paid) || 0,
           adblue: Number(adblue) || 0,
         }),
@@ -120,7 +112,7 @@ export function DieselManager() {
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || "Failed to add");
       // Reset form
-      setLiter(""); setPricePerLiter(""); setAmount(""); setPaid(""); setAdblue(""); setNote("");
+      setAmount(""); setPaid(""); setAdblue(""); setNote("");
       router.refresh();
       loadEntries();
     } catch (err) {
@@ -172,7 +164,7 @@ export function DieselManager() {
           <h3 className="text-sm font-bold text-gray-900">Add Diesel Entry</h3>
         </div>
         <form onSubmit={handleAdd} className="p-5 space-y-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <Field label="Vehicle" className="sm:col-span-2">
               <Select value={vehicleId} onChange={(e) => setVehicleId(e.target.value)} required>
                 <option value="">— Select Vehicle —</option>
@@ -180,12 +172,6 @@ export function DieselManager() {
                   <option key={v.id} value={v.id}>{v.registrationNumber}</option>
                 ))}
               </Select>
-            </Field>
-            <Field label="Liter">
-              <Input type="number" step="any" min="0" value={liter} placeholder="0" onChange={(e) => setLiter(e.target.value)} />
-            </Field>
-            <Field label="Price / Liter">
-              <Input type="number" step="any" min="0" value={pricePerLiter} placeholder="0" onChange={(e) => setPricePerLiter(e.target.value)} />
             </Field>
             <Field label="Amount">
               <Input type="number" step="any" min="0" value={amount} placeholder="0" onChange={(e) => setAmount(e.target.value)} />
@@ -199,7 +185,7 @@ export function DieselManager() {
             <Field label="Adblue (L)">
               <Input type="number" step="any" min="0" value={adblue} placeholder="0" onChange={(e) => setAdblue(e.target.value)} />
             </Field>
-            <Field label="Note" className="sm:col-span-2 lg:col-span-2">
+            <Field label="Note" className="sm:col-span-2 lg:col-span-3">
               <Input value={note} placeholder="Optional note…" onChange={(e) => setNote(e.target.value)} />
             </Field>
           </div>
@@ -238,8 +224,6 @@ export function DieselManager() {
                   <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">No</th>
                   <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Date</th>
                   <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Vehicle</th>
-                  <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Liter</th>
-                  <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Price/L</th>
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Amount</th>
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Paid</th>
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Balance</th>
@@ -260,8 +244,6 @@ export function DieselManager() {
                           {e.vehicle?.registrationNumber ?? "—"}
                         </Link>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right text-gray-700">{(e.liter ?? 0) > 0 ? `${e.liter} L` : "—"}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right text-gray-500">{(e.pricePerLiter ?? 0) > 0 ? money(e.pricePerLiter) : "—"}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-purple-700">{money(e.amount)}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-green-700">{(e.paid ?? 0) > 0 ? money(e.paid) : "—"}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-amber-700">{bal > 0 ? money(bal) : "—"}</td>
@@ -277,8 +259,6 @@ export function DieselManager() {
               <tfoot>
                 <tr className="border-t-2 border-gray-200 bg-gray-50/70 font-bold">
                   <td colSpan={3} className="px-4 py-3 text-right text-xs uppercase tracking-wider text-gray-500">Total</td>
-                  <td className="px-4 py-3 text-right text-blue-700">{totalLiter > 0 ? `${totalLiter} L` : "—"}</td>
-                  <td />
                   <td className="px-4 py-3 text-right text-purple-700">{money(totalAmount)}</td>
                   <td className="px-4 py-3 text-right text-green-700">{money(totalPaid)}</td>
                   <td className="px-4 py-3 text-right text-amber-700">{totalBalance > 0 ? money(totalBalance) : "—"}</td>
