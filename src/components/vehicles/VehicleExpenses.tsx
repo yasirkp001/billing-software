@@ -58,31 +58,10 @@ type SectionDef = {
 };
 
 const GENERAL_CATS = EXPENSE_CATEGORIES.filter(
-  (c) => !["diesel", "fasttag", "police"].includes(c.value)
+  (c) => c.value !== "custom"
 );
 
 const SECTIONS: SectionDef[] = [
-  {
-    title: "Diesel",
-    defaultCategory: "diesel",
-    categories: [{ value: "diesel", label: "Diesel" }],
-    headerBg: "bg-purple-50 border-purple-100",
-    totalColor: "text-purple-700",
-  },
-  {
-    title: "FASTag",
-    defaultCategory: "fasttag",
-    categories: [{ value: "fasttag", label: "FASTag" }],
-    headerBg: "bg-cyan-50 border-cyan-100",
-    totalColor: "text-cyan-700",
-  },
-  {
-    title: "Police",
-    defaultCategory: "police",
-    categories: [{ value: "police", label: "Police" }],
-    headerBg: "bg-orange-50 border-orange-100",
-    totalColor: "text-orange-700",
-  },
   {
     title: "Liability & Expenses",
     defaultCategory: "liability",
@@ -112,7 +91,7 @@ function ExpenseSection({
   // For single-category sections the filter is exact; for general it's everything else
   const rows = isSingleCat
     ? allRows.filter((r) => r.category === section.defaultCategory)
-    : allRows.filter((r) => !["diesel", "fasttag", "police"].includes(r.category));
+    : allRows;
 
   const [category, setCategory] = useState(section.defaultCategory);
   const [customCategory, setCustomCategory] = useState("");
