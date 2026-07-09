@@ -171,7 +171,7 @@ export function DieselManager() {
           { label: "Total Paid", value: money(totalPaid), color: "text-green-700", bg: "bg-green-100 text-green-600" },
           { label: "Balance", value: money(totalBalance), color: totalBalance > 0 ? "text-red-700" : "text-gray-400", bg: "bg-red-100 text-red-600" },
           { label: "Total Liters", value: `${totalLiter.toLocaleString("en-IN")} L`, color: "text-blue-700", bg: "bg-blue-100 text-blue-600" },
-          { label: "Total Adblue", value: `${totalAdblue.toLocaleString("en-IN")} L`, color: "text-amber-700", bg: "bg-amber-100 text-amber-600" },
+          { label: "Total Adblue", value: money(totalAdblue), color: "text-amber-700", bg: "bg-amber-100 text-amber-600" },
         ].map((c) => (
           <div key={c.label} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
@@ -204,7 +204,7 @@ export function DieselManager() {
             <Field label="Amount">
               <Input type="number" step="any" value={amount} placeholder="0" onChange={(e) => setAmount(e.target.value)} />
             </Field>
-            <Field label="Adblue (L)">
+            <Field label="Adblue">
               <Input type="number" step="any" value={adblue} placeholder="0" onChange={(e) => setAdblue(e.target.value)} />
             </Field>
             <Field label="Paid">
@@ -288,7 +288,7 @@ export function DieselManager() {
                           )}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-purple-700">{e.amount > 0 ? money(e.amount) : "—"}</td>
-                        <td className="whitespace-nowrap px-4 py-3 text-right text-blue-600">{(e.adblue ?? 0) > 0 ? `${e.adblue} L` : "—"}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-blue-600">{(e.adblue ?? 0) > 0 ? money(e.adblue) : "—"}</td>
                         <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-green-700">{(e.paid ?? 0) > 0 ? money(e.paid) : "—"}</td>
                         <td className="whitespace-nowrap px-4 py-3 text-right font-extrabold text-red-700">{money(runningBalance)}</td>
                         <td className="px-4 py-3 text-xs text-gray-600">
@@ -310,7 +310,7 @@ export function DieselManager() {
                 <tr className="border-t-2 border-gray-200 bg-gray-50/70 font-bold">
                   <td colSpan={3} className="px-4 py-3 text-right text-xs uppercase tracking-wider text-gray-500">Total</td>
                   <td className="px-4 py-3 text-right text-purple-700">{money(totalAmount)}</td>
-                  <td className="px-4 py-3 text-right text-blue-600">{totalAdblue > 0 ? `${totalAdblue} L` : "—"}</td>
+                  <td className="px-4 py-3 text-right text-blue-600">{money(totalAdblue)}</td>
                   <td className="px-4 py-3 text-right text-green-700">{money(totalPaid)}</td>
                   <td className="px-4 py-3 text-right text-amber-700">{totalBalance > 0 ? money(totalBalance) : "—"}</td>
                   <td colSpan={2} />
