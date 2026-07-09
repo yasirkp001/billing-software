@@ -185,9 +185,6 @@ export function DieselManager() {
             <Field label="Paid">
               <Input type="number" step="any" min="0" value={paid} placeholder="0" onChange={(e) => setPaid(e.target.value)} />
             </Field>
-            <Field label="Note" className="sm:col-span-3">
-              <Input value={note} placeholder="Optional note…" onChange={(e) => setNote(e.target.value)} />
-            </Field>
           </div>
           {error && <p className="text-xs font-medium text-red-600">{error}</p>}
           <div className="flex justify-end">
@@ -228,7 +225,6 @@ export function DieselManager() {
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Adblue</th>
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Paid</th>
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Balance</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Note</th>
                   <th className="px-4 py-2.5" />
                 </tr>
               </thead>
@@ -248,7 +244,6 @@ export function DieselManager() {
                       <td className="whitespace-nowrap px-4 py-3 text-right text-blue-600">{(e.adblue ?? 0) > 0 ? `${e.adblue} L` : "—"}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-green-700">{(e.paid ?? 0) > 0 ? money(e.paid) : "—"}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-amber-700">{bal > 0 ? money(bal) : "—"}</td>
-                      <td className="px-4 py-3 text-gray-500">{e.note || "—"}</td>
                       <td className="px-4 py-3 text-right">
                         <button onClick={() => handleDelete(e)} className="text-gray-300 hover:text-red-500 transition-colors" aria-label="Delete">✕</button>
                       </td>
@@ -263,7 +258,7 @@ export function DieselManager() {
                   <td className="px-4 py-3 text-right text-blue-600">{totalAdblue > 0 ? `${totalAdblue} L` : "—"}</td>
                   <td className="px-4 py-3 text-right text-green-700">{money(totalPaid)}</td>
                   <td className="px-4 py-3 text-right text-amber-700">{totalBalance > 0 ? money(totalBalance) : "—"}</td>
-                  <td colSpan={2} />
+                  <td />
                 </tr>
               </tfoot>
             </table>
