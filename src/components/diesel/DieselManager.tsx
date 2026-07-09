@@ -56,45 +56,18 @@ export function DieselManager() {
     setLoading(false);
   }, []);
 
-  // Use a simpler approach — fetch each vehicle's diesel expenses
+  // Fetch all diesel entries directly from the database
   const loadEntries = useCallback(async () => {
     setLoading(true);
     try {
-      const vRes = await fetch("/api/vehicles");
-      const vBody = await vRes.json();
-      if (vBody.data) {
-        setVehicles(vBody.data);
-        // Fetch diesel expenses for all vehicles in parallel
-        // Exclude general entries (marked with [GENERAL]) from vehicle loads
-        const vehicleExpenses = await Promise.all(
-          vBody.data.map((v: Vehicle) =>
-            fetch(`/api/vehicles/${v.id}/expenses`)
-              .then((r) => r.json())
-              .then((b) =>
-                (b.data || [])
-                  .filter((e: DieselEntry) => 
-                    e.category === "diesel" && 
-                    !e.note?.startsWith("[GENERAL]")
-                  )
-                  .map((e: DieselEntry) => ({ ...e, vehicle: v }))
-              )
-              .catch(() => [])
-          )
-        );
-        
-        // Fetch general diesel entries
-        const generalRes = await fetch("/api/diesel/general");
-        const generalBody = await generalRes.json();
-        const generalEntries = generalBody.data || [];
-        
-        // Combine and deduplicate by ID
-        const combined = [...vehicleExpenses.flat(), ...generalEntries];
-        const uniqueMap = new Map();
-        combined.forEach((entry) => {
-          uniqueMap.set(entry.id, entry);
-        });
-        
-        const all = Array.from(uniqueMap.values()).sort((a: DieselEntry, b: DieselEntry) => {
+      const [vRes, dRes] = await Promise.all([
+        fetch("/api/vehicles"),
+        fetch("/api/diesel"),
+      ]);
+      const [vBody, dBody] = await Promise.all([vRes.json(), dRes.json()]);
+      if (vBody.data) setVehicles(vBody.data);
+      if (dBody.data) {
+        const all = (dBody.data || []).sort((a: DieselEntry, b: DieselEntry) => {
           const timeDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
           if (timeDiff !== 0) return timeDiff;
 
@@ -188,8 +161,6 @@ export function DieselManager() {
   const totalLiter = entries.reduce((s, e) => s + (e.liter ?? 0), 0);
   const totalAdblue = entries.reduce((s, e) => s + (e.adblue ?? 0), 0);
 
-  const dieselEntries = entries.filter((e) => e.amount > 0);
-  const paymentEntries = entries.filter((e) => e.amount === 0 && (e.paid ?? 0) > 0);
 
   return (
     <div className="space-y-5">
@@ -292,7 +263,7 @@ export function DieselManager() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {dieselEntries.map((e, idx) => {
+                {entries.map((e, idx) => {
                   const bal = e.amount - (e.paid ?? 0);
                   const paymentMatch = e.note?.match(/Payment: (\w+)/i);
                   const paymentMethod = paymentMatch ? paymentMatch[1] : "";
@@ -311,48 +282,7 @@ export function DieselManager() {
                           </Link>
                         )}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-purple-700">{money(e.amount)}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right text-blue-600">{(e.adblue ?? 0) > 0 ? `${e.adblue} L` : "—"}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-green-700">{(e.paid ?? 0) > 0 ? money(e.paid) : "—"}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-amber-700">{bal > 0 ? money(bal) : "—"}</td>
-                      <td className="px-4 py-3 text-xs text-gray-600">
-                        {paymentMethod && (
-                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
-                            {paymentMethod}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button onClick={() => handleDelete(e)} className="text-gray-300 hover:text-red-500 transition-colors" aria-label="Delete">✕</button>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {paymentEntries.length > 0 && (
-                  <tr className="bg-gray-100">
-                    <td colSpan={9} className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Payments</td>
-                  </tr>
-                )}
-                {paymentEntries.map((e, idx) => {
-                  const bal = e.amount - (e.paid ?? 0);
-                  const paymentMatch = e.note?.match(/Payment: (\w+)/i);
-                  const paymentMethod = paymentMatch ? paymentMatch[1] : "";
-                  const isGeneral = e.note?.startsWith("[GENERAL]");
-
-                  return (
-                    <tr key={e.id} className="hover:bg-gray-50/60">
-                      <td className="px-4 py-3 text-xs text-gray-400">{dieselEntries.length + idx + 1}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-gray-500">{formatDate(e.date)}</td>
-                      <td className="px-4 py-3">
-                        {isGeneral ? (
-                          <span className="text-sm font-semibold text-gray-400">General</span>
-                        ) : (
-                          <Link href={`/vehicles/${e.vehicleId}`} className="font-bold text-red-600 hover:underline">
-                            {e.vehicle?.registrationNumber ?? "—"}
-                          </Link>
-                        )}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-purple-700">{money(e.amount)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-purple-700">{e.amount > 0 ? money(e.amount) : "—"}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right text-blue-600">{(e.adblue ?? 0) > 0 ? `${e.adblue} L` : "—"}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-green-700">{(e.paid ?? 0) > 0 ? money(e.paid) : "—"}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-amber-700">{bal > 0 ? money(bal) : "—"}</td>
