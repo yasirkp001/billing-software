@@ -102,12 +102,18 @@ export function DieselManager() {
     const amt = amount === "" ? 0 : Number(amount);
     const paidAmt = paid === "" ? 0 : Number(paid);
     
-    console.log("Validation:", { amt, paidAmt, amount, paid });
+    console.log("Validation:", { amt, paidAmt, amount, paid, vehicleId });
     
     // Allow entry with either amount or paid (or both)
     if (amt <= 0 && paidAmt <= 0) { 
       setError("Enter amount or paid value."); 
       return; 
+    }
+    
+    // If amount is entered, vehicle is required
+    if (amt > 0 && !vehicleId) {
+      setError("Select a vehicle for amount entry.");
+      return;
     }
     
     setSaving(true);
@@ -117,7 +123,8 @@ export function DieselManager() {
         ? `Payment: ${paymentMethod.toUpperCase()}${note ? ` | ${note}` : ''}`
         : note;
       
-      // Use general API if no vehicle selected, otherwise vehicle-specific API
+      // Use general API if no vehicle selected (paid-only entries)
+      // Otherwise use vehicle-specific API (amount entries)
       const apiUrl = vehicleId 
         ? `/api/vehicles/${vehicleId}/expenses`
         : `/api/diesel/general`;
