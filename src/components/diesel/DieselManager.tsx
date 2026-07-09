@@ -265,12 +265,21 @@ export function DieselManager() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {(() => {
+                  // Calculate running balance oldest-first (correct order)
+                  const entriesWithBalance = [...entries].reverse().map((e) => {
+                    return { ...e };
+                  });
                   let runningBalance = 0;
-                  return entries.map((e, idx) => {
-                    const prevBalance = runningBalance;
-                    // Calculate cumulative balance
+                  const balanceMap = new Map<string, { prev: number; current: number }>();
+                  entriesWithBalance.forEach((e) => {
+                    const prev = runningBalance;
                     runningBalance += e.amount - (e.paid ?? 0);
-                    
+                    balanceMap.set(e.id, { prev, current: runningBalance });
+                  });
+
+                  // Display newest-first
+                  return entries.map((e, idx) => {
+                    const balData = balanceMap.get(e.id) ?? { prev: 0, current: 0 };
                     const paymentMatch = e.note?.match(/Payment: (\w+)/i);
                     const paymentMethod = paymentMatch ? paymentMatch[1] : "";
                     const displayPaymentMethod = paymentMethod || ((e.paid ?? 0) > 0 ? "Cash" : "");
@@ -289,11 +298,11 @@ export function DieselManager() {
                             </span>
                           )}
                         </td>
-                        <td className="whitespace-nowrap px-4 py-3 text-right text-gray-500">{money(prevBalance)}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-gray-500">{money(balData.prev)}</td>
                         <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-purple-700">{e.amount > 0 ? money(e.amount) : "—"}</td>
                         <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-blue-600">{(e.adblue ?? 0) > 0 ? money(e.adblue) : "—"}</td>
                         <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-green-700">{(e.paid ?? 0) > 0 ? money(e.paid) : "—"}</td>
-                        <td className="whitespace-nowrap px-4 py-3 text-right font-extrabold text-red-700">{money(runningBalance)}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right font-extrabold text-red-700">{money(balData.current)}</td>
                         <td className="px-4 py-3 text-xs text-gray-600">
                           {displayPaymentMethod && (
                             <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
