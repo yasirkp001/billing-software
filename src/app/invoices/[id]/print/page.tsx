@@ -171,6 +171,9 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
 
   const expensesList = Object.values(groupedExpenses).filter((e) => e.amount > 0);
   const totalExpensesAmount = expensesList.reduce((s, e) => s + e.amount, 0);
+  const dieselTotal = groupedExpenses["diesel"]?.amount ?? 0;
+  const fastagTotal = groupedExpenses["fasttag"]?.amount ?? 0;
+  const policeTotal = groupedExpenses["police"]?.amount ?? 0;
 
   const statusStyles: Record<string, string> = {
     paid: "bg-green-100 text-green-800 border-green-200",
@@ -427,6 +430,29 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
               <div className={`flex justify-between border-t-2 pt-2 text-base font-extrabold ${balance <= 0 ? "border-gray-200 text-gray-400" : "border-red-200 text-red-700"}`}>
                 <span>Balance Due</span><span className="font-mono">{fmt(balance)}</span>
               </div>
+              {/* Driver Pay & Net Balance */}
+              {invoice.totalAmount > 0 && (
+                <>
+                  <div className="flex justify-between border-t border-dashed border-gray-200 pt-2 text-gray-600">
+                    <span className="font-medium">Driver Pay (15%)</span>
+                    <span className="font-mono font-semibold text-blue-600">{fmt(invoice.totalAmount * 0.15)}</span>
+                  </div>
+                  {(dieselTotal > 0 || fastagTotal > 0 || policeTotal > 0) && (
+                    <div className="flex justify-between text-gray-500">
+                      <span className="font-medium text-xs">Diesel + FASTag + Police</span>
+                      <span className="font-mono">− {fmt(dieselTotal + fastagTotal + policeTotal)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between border-t border-gray-200 pt-1.5 text-base font-extrabold text-green-700">
+                    <span>Net Balance</span>
+                    <span className="font-mono">{fmt(
+                      invoice.totalAmount
+                      - invoice.totalAmount * 0.15
+                      - dieselTotal - fastagTotal - policeTotal
+                    )}</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
