@@ -91,8 +91,8 @@ export function DieselManager() {
     e.preventDefault();
     setError("");
     if (!vehicleId) { setError("Select a vehicle."); return; }
-    const amt = Number(amount) || 0;
-    const paidAmt = Number(paid) || 0;
+    const amt = amount === "" ? 0 : Number(amount);
+    const paidAmt = paid === "" ? 0 : Number(paid);
     // Allow entry with either amount or paid (or both)
     if (amt <= 0 && paidAmt <= 0) { 
       setError("Enter amount or paid value."); 
@@ -105,13 +105,13 @@ export function DieselManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           category: "diesel",
-          amount: Number(amount) || 0,
+          amount: amount === "" ? 0 : Number(amount),
           date,
           note,
           liter: 0,
           pricePerLiter: 0,
-          paid: Number(paid) || 0,
-          adblue: Number(adblue) || 0,
+          paid: paid === "" ? 0 : Number(paid),
+          adblue: adblue === "" ? 0 : Number(adblue),
         }),
       });
       const body = await res.json();
