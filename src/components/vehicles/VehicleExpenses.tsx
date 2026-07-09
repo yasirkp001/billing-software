@@ -12,6 +12,10 @@ export type Expense = {
   date: string;
   category: string;
   amount: number;
+  liter?: number;
+  pricePerLiter?: number;
+  paid?: number;
+  adblue?: number;
   note: string;
 };
 
@@ -96,10 +100,23 @@ function ExpenseSection({
   const [category, setCategory] = useState(section.defaultCategory);
   const [customCategory, setCustomCategory] = useState("");
   const [amount, setAmount] = useState("");
+  const [liter, setLiter] = useState("");
+  const [pricePerLiter, setPricePerLiter] = useState("");
+  const [paid, setPaid] = useState("");
+  const [adblue, setAdblue] = useState("");
   const [date, setDate] = useState(todayInput());
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  // Auto-calculate amount when liter & price change
+  const calcAmount = () => {
+    const l = Number(liter);
+    const p = Number(pricePerLiter);
+    if (l > 0 && p > 0) setAmount(String(l * p));
+  };
+
+  const isDiesel = category === "diesel" || section.defaultCategory === "diesel";
 
   async function addExpense(e: React.FormEvent) {
     e.preventDefault();
@@ -113,13 +130,26 @@ function ExpenseSection({
       const res = await fetch(`/api/vehicles/${vehicleId}/expenses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: finalCategory, amount: amt, date, note }),
+        body: JSON.stringify({
+          category: finalCategory,
+          amount: amt,
+          date,
+          note,
+          liter: Number(liter) || 0,
+          pricePerLiter: Number(pricePerLiter) || 0,
+          paid: Number(paid) || 0,
+          adblue: Number(adblue) || 0,
+        }),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || "Failed to add expense");
       onAdd(body.data);
       setAmount("");
       setNote("");
+      setLiter("");
+      setPricePerLiter("");
+      setPaid("");
+      setAdblue("");
       setCustomCategory("");
       setCategory(section.defaultCategory);
     } catch (err) {
@@ -142,12 +172,11 @@ function ExpenseSection({
       {/* Add form */}
       <form
         onSubmit={addExpense}
-        className="grid grid-cols-1 gap-3 border-b border-gray-100 px-5 py-4 sm:items-end"
-        style={{ gridTemplateColumns: isSingleCat ? "1fr 1fr auto" : "1fr 1fr 1fr auto" }}
+        className="grid grid-cols-1 gap-3 border-b border-gray-100 px-5 py-4 sm:items-end sm:grid-cols-2"
       >
         {/* Category selector — hide for single-category sections */}
         {!isSingleCat && (
-          <Field label="Category">
+          <Field label="Category" className="sm:col-span-2">
             <div className="flex flex-col gap-2">
               <Select value={category} onChange={(e) => setCategory(e.target.value)}>
                 {section.categories.map((c) => (
@@ -166,22 +195,45 @@ function ExpenseSection({
             </div>
           </Field>
         )}
+        {/* Diesel-specific fields */}
+        {isDiesel && (
+          <>
+            <Field label="Liter">
+              <Input type="number" step="any" min="0" value={liter} placeholder="0"
+                onChange={(e) => { setLiter(e.target.value); setTimeout(calcAmount, 0); }} />
+            </Field>
+            <Field label="Price / Liter">
+              <Input type="number" step="any" min="0" value={pricePerLiter} placeholder="0"
+                onChange={(e) => { setPricePerLiter(e.target.value); setTimeout(calcAmount, 0); }} />
+            </Field>
+          </>
+        )}
         <Field label="Amount">
           <Input type="number" step="any" min="0" value={amount} placeholder="0" onChange={(e) => setAmount(e.target.value)} />
         </Field>
+        {isDiesel && (
+          <Field label="Paid">
+            <Input type="number" step="any" min="0" value={paid} placeholder="0" onChange={(e) => setPaid(e.target.value)} />
+          </Field>
+        )}
         <Field label="Date">
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
-        <Button type="submit" disabled={saving} className="h-[38px]">
-          <Icon name="plus" size={15} /> {saving ? "Adding…" : "Add"}
-        </Button>
-        <div style={{ gridColumn: isSingleCat ? "1 / 4" : "1 / 5" }}>
+        {isDiesel && (
+          <Field label="Adblue (L)">
+            <Input type="number" step="any" min="0" value={adblue} placeholder="0" onChange={(e) => setAdblue(e.target.value)} />
+          </Field>
+        )}
+        <div className="sm:col-span-2">
           <Input value={note} placeholder="Note (optional)…" onChange={(e) => setNote(e.target.value)} />
         </div>
+        <div className="sm:col-span-2 flex justify-end">
+          <Button type="submit" disabled={saving}>
+            <Icon name="plus" size={15} /> {saving ? "Adding…" : "Add"}
+          </Button>
+        </div>
         {error && (
-          <p className="text-xs font-medium text-red-600" style={{ gridColumn: isSingleCat ? "1 / 4" : "1 / 5" }}>
-            {error}
-          </p>
+          <p className="text-xs font-medium text-red-600 sm:col-span-2">{error}</p>
         )}
       </form>
 
@@ -200,8 +252,13 @@ function ExpenseSection({
                 {!isSingleCat && (
                   <th className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Category</th>
                 )}
+                {isDiesel && <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Liter</th>}
+                {isDiesel && <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Price/L</th>}
                 <th className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Note</th>
                 <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Amount</th>
+                {isDiesel && <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Paid</th>}
+                {isDiesel && <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Balance</th>}
+                {isDiesel && <th className="px-5 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Adblue</th>}
                 <th className="px-5 py-2.5" />
               </tr>
             </thead>
@@ -216,24 +273,26 @@ function ExpenseSection({
                       </span>
                     </td>
                   )}
+                  {isDiesel && <td className="whitespace-nowrap px-5 py-3 text-right text-gray-600">{(r.liter ?? 0) > 0 ? `${r.liter} L` : "—"}</td>}
+                  {isDiesel && <td className="whitespace-nowrap px-5 py-3 text-right text-gray-500">{(r.pricePerLiter ?? 0) > 0 ? money(r.pricePerLiter!) : "—"}</td>}
                   <td className="px-5 py-3 text-gray-600">{r.note || "—"}</td>
                   <td className="whitespace-nowrap px-5 py-3 text-right font-bold text-gray-800">{money(r.amount)}</td>
+                  {isDiesel && <td className="whitespace-nowrap px-5 py-3 text-right font-semibold text-green-700">{(r.paid ?? 0) > 0 ? money(r.paid!) : "—"}</td>}
+                  {isDiesel && <td className="whitespace-nowrap px-5 py-3 text-right font-bold text-amber-700">{(r.amount - (r.paid ?? 0)) > 0 ? money(r.amount - (r.paid ?? 0)) : "—"}</td>}
+                  {isDiesel && <td className="whitespace-nowrap px-5 py-3 text-right text-blue-600">{(r.adblue ?? 0) > 0 ? `${r.adblue} L` : "—"}</td>}
                   <td className="px-5 py-3 text-right">
-                    <button
-                      onClick={() => onDelete(r.id)}
-                      className="text-gray-300 transition-colors hover:text-red-500"
-                      aria-label="Delete expense"
-                    >
-                      ✕
-                    </button>
+                    <button onClick={() => onDelete(r.id)} className="text-gray-300 transition-colors hover:text-red-500" aria-label="Delete expense">✕</button>
                   </td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr className="border-t border-gray-200 bg-gray-50/70">
-                <td colSpan={isSingleCat ? 2 : 3} className="px-5 py-3 text-right font-bold text-gray-700">Total</td>
+                <td colSpan={isSingleCat ? (isDiesel ? 3 : 2) : (isDiesel ? 4 : 3)} className="px-5 py-3 text-right font-bold text-gray-700">Total</td>
                 <td className={`whitespace-nowrap px-5 py-3 text-right font-extrabold ${section.totalColor}`}>{money(total)}</td>
+                {isDiesel && <td className="whitespace-nowrap px-5 py-3 text-right font-extrabold text-green-700">{money(rows.reduce((s,r) => s+(r.paid??0),0))}</td>}
+                {isDiesel && <td className="whitespace-nowrap px-5 py-3 text-right font-extrabold text-amber-700">{money(rows.reduce((s,r) => s+r.amount-(r.paid??0),0))}</td>}
+                {isDiesel && <td />}
                 <td />
               </tr>
             </tfoot>

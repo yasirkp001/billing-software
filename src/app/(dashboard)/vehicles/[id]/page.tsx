@@ -44,6 +44,10 @@ export default async function VehicleDetailPage({
     date: e.date.toISOString(),
     category: e.category,
     amount: e.amount,
+    liter: e.liter ?? 0,
+    pricePerLiter: e.pricePerLiter ?? 0,
+    paid: e.paid ?? 0,
+    adblue: e.adblue ?? 0,
     note: e.note,
   }));
 

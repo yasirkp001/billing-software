@@ -44,6 +44,10 @@ export async function POST(req: Request, ctx: Ctx) {
         category,
         date: Number.isNaN(d.getTime()) ? new Date() : d,
         note: String(body.note ?? "").trim(),
+        liter: Number(body.liter) || 0,
+        pricePerLiter: Number(body.pricePerLiter) || 0,
+        paid: Number(body.paid) || 0,
+        adblue: Number(body.adblue) || 0,
       },
     });
     return ok(row, { status: 201 });
