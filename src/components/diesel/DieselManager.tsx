@@ -182,13 +182,13 @@ export function DieselManager() {
               </Select>
             </Field>
             <Field label="Amount">
-              <Input type="number" step="any" min="0" value={amount} placeholder="0" onChange={(e) => setAmount(e.target.value)} />
+              <Input type="number" step="any" value={amount} placeholder="0" onChange={(e) => setAmount(e.target.value)} />
             </Field>
             <Field label="Adblue (L)">
-              <Input type="number" step="any" min="0" value={adblue} placeholder="0" onChange={(e) => setAdblue(e.target.value)} />
+              <Input type="number" step="any" value={adblue} placeholder="0" onChange={(e) => setAdblue(e.target.value)} />
             </Field>
             <Field label="Paid">
-              <Input type="number" step="any" min="0" value={paid} placeholder="0" onChange={(e) => setPaid(e.target.value)} />
+              <Input type="number" step="any" value={paid} placeholder="0" onChange={(e) => setPaid(e.target.value)} />
             </Field>
           </div>
           {error && <p className="text-xs font-medium text-red-600">{error}</p>}
