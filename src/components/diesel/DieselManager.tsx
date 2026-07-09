@@ -94,9 +94,16 @@ export function DieselManager() {
           uniqueMap.set(entry.id, entry);
         });
         
-        const all = Array.from(uniqueMap.values()).sort(
-          (a: DieselEntry, b: DieselEntry) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
+        const all = Array.from(uniqueMap.values()).sort((a: DieselEntry, b: DieselEntry) => {
+          const timeDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+          if (timeDiff !== 0) return timeDiff;
+
+          const aIsPaymentOnly = a.amount === 0 && (a.paid ?? 0) > 0;
+          const bIsPaymentOnly = b.amount === 0 && (b.paid ?? 0) > 0;
+          if (aIsPaymentOnly !== bIsPaymentOnly) return aIsPaymentOnly ? 1 : -1;
+
+          return b.id.localeCompare(a.id);
+        });
         setEntries(all);
       }
     } catch { /* ignore */ }
@@ -287,11 +294,13 @@ export function DieselManager() {
                   // Extract payment method from note
                   const paymentMatch = e.note?.match(/Payment: (\w+)/i);
                   const paymentMethod = paymentMatch ? paymentMatch[1] : "";
+                  // Default to "Cash" for old entries with paid amount but no payment method
+                  const displayPaymentMethod = paymentMethod || ((e.paid ?? 0) > 0 ? "Cash" : "");
                   const isGeneral = e.note?.startsWith("[GENERAL]");
                   
                   return (
                     <tr key={e.id} className="hover:bg-gray-50/60">
-                      <td className="px-4 py-3 text-xs text-gray-400">{entries.length - idx}</td>
+                      <td className="px-4 py-3 text-xs text-gray-400">{idx + 1}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-gray-500">{formatDate(e.date)}</td>
                       <td className="px-4 py-3">
                         {isGeneral ? (
