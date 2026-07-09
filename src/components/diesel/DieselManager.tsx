@@ -35,6 +35,7 @@ export function DieselManager() {
   const [vehicleId, setVehicleId] = useState("");
   const [amount, setAmount] = useState("");
   const [paid, setPaid] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
   const [adblue, setAdblue] = useState("");
   const [date, setDate] = useState(todayInput());
   const [note, setNote] = useState("");
@@ -103,6 +104,11 @@ export function DieselManager() {
     }
     setSaving(true);
     try {
+      const paidAmount = paid === "" ? 0 : Number(paid);
+      const noteWithPayment = paidAmount > 0 
+        ? `Payment: ${paymentMethod.toUpperCase()}${note ? ` | ${note}` : ''}`
+        : note;
+        
       const res = await fetch(`/api/vehicles/${vehicleId}/expenses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -110,17 +116,17 @@ export function DieselManager() {
           category: "diesel",
           amount: amount === "" ? 0 : Number(amount),
           date,
-          note,
+          note: noteWithPayment,
           liter: 0,
           pricePerLiter: 0,
-          paid: paid === "" ? 0 : Number(paid),
+          paid: paidAmount,
           adblue: adblue === "" ? 0 : Number(adblue),
         }),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || "Failed to add");
       // Reset form
-      setAmount(""); setPaid(""); setAdblue(""); setNote("");
+      setAmount(""); setPaid(""); setAdblue(""); setNote(""); setPaymentMethod("cash");
       router.refresh();
       loadEntries();
     } catch (err) {
@@ -193,6 +199,14 @@ export function DieselManager() {
             <Field label="Paid">
               <Input type="number" step="any" value={paid} placeholder="0" onChange={(e) => setPaid(e.target.value)} />
             </Field>
+            <Field label="Payment Method">
+              <Select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                <option value="cash">Cash</option>
+                <option value="gpay">GPay</option>
+                <option value="cheque">Cheque</option>
+                <option value="bank">Bank Transfer</option>
+              </Select>
+            </Field>
           </div>
           {error && <p className="text-xs font-medium text-red-600">{error}</p>}
           <div className="flex justify-end">
@@ -233,12 +247,17 @@ export function DieselManager() {
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Adblue</th>
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Paid</th>
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Balance</th>
+                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">Payment</th>
                   <th className="px-4 py-2.5" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {entries.map((e, idx) => {
                   const bal = e.amount - (e.paid ?? 0);
+                  // Extract payment method from note
+                  const paymentMatch = e.note?.match(/Payment: (\w+)/i);
+                  const paymentMethod = paymentMatch ? paymentMatch[1] : "";
+                  
                   return (
                     <tr key={e.id} className="hover:bg-gray-50/60">
                       <td className="px-4 py-3 text-xs text-gray-400">{entries.length - idx}</td>
@@ -252,6 +271,13 @@ export function DieselManager() {
                       <td className="whitespace-nowrap px-4 py-3 text-right text-blue-600">{(e.adblue ?? 0) > 0 ? `${e.adblue} L` : "—"}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-green-700">{(e.paid ?? 0) > 0 ? money(e.paid) : "—"}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-amber-700">{bal > 0 ? money(bal) : "—"}</td>
+                      <td className="px-4 py-3 text-xs text-gray-600">
+                        {paymentMethod && (
+                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                            {paymentMethod}
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-right">
                         <button onClick={() => handleDelete(e)} className="text-gray-300 hover:text-red-500 transition-colors" aria-label="Delete">✕</button>
                       </td>
@@ -266,7 +292,7 @@ export function DieselManager() {
                   <td className="px-4 py-3 text-right text-blue-600">{totalAdblue > 0 ? `${totalAdblue} L` : "—"}</td>
                   <td className="px-4 py-3 text-right text-green-700">{money(totalPaid)}</td>
                   <td className="px-4 py-3 text-right text-amber-700">{totalBalance > 0 ? money(totalBalance) : "—"}</td>
-                  <td />
+                  <td colSpan={2} />
                 </tr>
               </tfoot>
             </table>
