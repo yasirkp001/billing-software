@@ -140,11 +140,10 @@ export function DieselManager() {
   return (
     <div className="space-y-5">
       {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           { label: "Total Amount", value: money(totalAmount), color: "text-purple-700", bg: "bg-purple-100 text-purple-600" },
           { label: "Total Paid", value: money(totalPaid), color: "text-green-700", bg: "bg-green-100 text-green-600" },
-          { label: "Balance", value: money(totalBalance), color: totalBalance > 0 ? "text-red-700" : "text-gray-400", bg: "bg-red-100 text-red-600" },
           { label: "Total Liters", value: `${totalLiter.toLocaleString("en-IN")} L`, color: "text-blue-700", bg: "bg-blue-100 text-blue-600" },
           { label: "Total Adblue", value: `${totalAdblue.toLocaleString("en-IN")} L`, color: "text-amber-700", bg: "bg-amber-100 text-amber-600" },
         ].map((c) => (
@@ -224,13 +223,11 @@ export function DieselManager() {
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Amount</th>
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Adblue</th>
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Paid</th>
-                  <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-gray-400">Balance</th>
                   <th className="px-4 py-2.5" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {entries.map((e, idx) => {
-                  const bal = e.amount - (e.paid ?? 0);
                   return (
                     <tr key={e.id} className="hover:bg-gray-50/60">
                       <td className="px-4 py-3 text-xs text-gray-400">{entries.length - idx}</td>
@@ -243,7 +240,6 @@ export function DieselManager() {
                       <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-purple-700">{money(e.amount)}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right text-blue-600">{(e.adblue ?? 0) > 0 ? `${e.adblue} L` : "—"}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-green-700">{(e.paid ?? 0) > 0 ? money(e.paid) : "—"}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-amber-700">{bal > 0 ? money(bal) : "—"}</td>
                       <td className="px-4 py-3 text-right">
                         <button onClick={() => handleDelete(e)} className="text-gray-300 hover:text-red-500 transition-colors" aria-label="Delete">✕</button>
                       </td>
@@ -257,7 +253,7 @@ export function DieselManager() {
                   <td className="px-4 py-3 text-right text-purple-700">{money(totalAmount)}</td>
                   <td className="px-4 py-3 text-right text-blue-600">{totalAdblue > 0 ? `${totalAdblue} L` : "—"}</td>
                   <td className="px-4 py-3 text-right text-green-700">{money(totalPaid)}</td>
-                  <td colSpan={2} />
+                  <td />
                 </tr>
               </tfoot>
             </table>
