@@ -165,7 +165,10 @@ export function DieselManager() {
         </div>
         <form onSubmit={handleAdd} className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            <Field label="Vehicle" className="sm:col-span-2">
+            <Field label="Date">
+              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </Field>
+            <Field label="Vehicle No" className="sm:col-span-2">
               <Select value={vehicleId} onChange={(e) => setVehicleId(e.target.value)} required>
                 <option value="">— Select Vehicle —</option>
                 {vehicles.map((v) => (
@@ -176,16 +179,13 @@ export function DieselManager() {
             <Field label="Amount">
               <Input type="number" step="any" min="0" value={amount} placeholder="0" onChange={(e) => setAmount(e.target.value)} />
             </Field>
-            <Field label="Paid">
-              <Input type="number" step="any" min="0" value={paid} placeholder="0" onChange={(e) => setPaid(e.target.value)} />
-            </Field>
-            <Field label="Date">
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-            </Field>
             <Field label="Adblue (L)">
               <Input type="number" step="any" min="0" value={adblue} placeholder="0" onChange={(e) => setAdblue(e.target.value)} />
             </Field>
-            <Field label="Note" className="sm:col-span-2 lg:col-span-3">
+            <Field label="Paid">
+              <Input type="number" step="any" min="0" value={paid} placeholder="0" onChange={(e) => setPaid(e.target.value)} />
+            </Field>
+            <Field label="Note" className="sm:col-span-3">
               <Input value={note} placeholder="Optional note…" onChange={(e) => setNote(e.target.value)} />
             </Field>
           </div>
