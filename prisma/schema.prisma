@@ -58,6 +58,7 @@ model Vehicle {
   fitnessExpiry        DateTime?
   taxValidUpto         DateTime?
   permitValidUpto      DateTime?
+  nationalPermitValidUpto DateTime?
   puccValidUpto        DateTime?
   area                 String      @default("")
   isActive             Boolean     @default(true)

@@ -100,6 +100,7 @@ export default async function VehicleDetailPage({
     { label: "Insurance Valid Upto", value: vehicle.insuranceExpiry ? formatDate(vehicle.insuranceExpiry) : "—" },
     { label: "Tax Valid Upto", value: vehicle.taxValidUpto ? formatDate(vehicle.taxValidUpto) : "—" },
     { label: "Permit Valid Upto", value: vehicle.permitValidUpto ? formatDate(vehicle.permitValidUpto) : "—" },
+    { label: "National Permit Valid Upto", value: vehicle.nationalPermitValidUpto ? formatDate(vehicle.nationalPermitValidUpto) : "—" },
     { label: "PUCC Valid Upto", value: vehicle.puccValidUpto ? formatDate(vehicle.puccValidUpto) : "—" },
   ];
 

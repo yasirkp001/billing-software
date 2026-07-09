@@ -5,7 +5,7 @@ import { money, formatDate } from "@/lib/format";
 export type Severity = "danger" | "warning" | "info";
 export type Notification = {
   id: string;
-  type: "overdue" | "insurance" | "fitness" | "tax" | "permit" | "pucc" | "license" | "tripsheet";
+  type: "overdue" | "insurance" | "fitness" | "tax" | "permit" | "natpermit" | "pucc" | "license" | "tripsheet";
   title: string;
   detail: string;
   href: string;
@@ -30,11 +30,12 @@ export async function GET() {
         where: {
           isActive: true,
           OR: [
-            { insuranceExpiry: { lte: soon } },
-            { fitnessExpiry: { lte: soon } },
-            { taxValidUpto: { lte: soon } },
-            { permitValidUpto: { lte: soon } },
-            { puccValidUpto: { lte: soon } },
+            { insuranceExpiry: { gte: new Date("2000-01-01"), lte: soon } },
+            { fitnessExpiry: { gte: new Date("2000-01-01"), lte: soon } },
+            { taxValidUpto: { gte: new Date("2000-01-01"), lte: soon } },
+            { permitValidUpto: { gte: new Date("2000-01-01"), lte: soon } },
+            { nationalPermitValidUpto: { gte: new Date("2000-01-01"), lte: soon } },
+            { puccValidUpto: { gte: new Date("2000-01-01"), lte: soon } },
           ],
         },
       }),
@@ -114,6 +115,17 @@ export async function GET() {
           detail: `${permit === "expired" ? "Expired" : "Expires"} ${formatDate(v.permitValidUpto)}`,
           href: `/vehicles/${v.id}`,
           severity: permit === "expired" ? "danger" : "warning",
+        });
+      }
+      const natPermit = docState(v.nationalPermitValidUpto);
+      if (natPermit) {
+        items.push({
+          id: `natpermit-${v.id}-${natPermit}`,
+          type: "permit",
+          title: `${v.registrationNumber} — national permit ${natPermit === "expired" ? "expired" : "expiring"}`,
+          detail: `${natPermit === "expired" ? "Expired" : "Expires"} ${formatDate(v.nationalPermitValidUpto)}`,
+          href: `/vehicles/${v.id}`,
+          severity: natPermit === "expired" ? "danger" : "warning",
         });
       }
       const pucc = docState(v.puccValidUpto);

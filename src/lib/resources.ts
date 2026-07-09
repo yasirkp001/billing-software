@@ -40,6 +40,7 @@ export const vehicleResource: Resource = {
     { name: "fitnessExpiry", type: "date" },
     { name: "taxValidUpto", type: "date" },
     { name: "permitValidUpto", type: "date" },
+    { name: "nationalPermitValidUpto", type: "date" },
     { name: "puccValidUpto", type: "date" },
     { name: "isActive", type: "boolean" },
     { name: "area", type: "string" },

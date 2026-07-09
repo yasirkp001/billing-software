@@ -16,6 +16,7 @@ interface VehicleDetails {
   insuranceExpiry?: string | null;
   fitnessExpiry?: string | null;
   permitValidUpto?: string | null;
+  nationalPermitValidUpto?: string | null;
   taxValidUpto?: string | null;
   puccValidUpto?: string | null;
   registrationDate?: string | null;
@@ -306,6 +307,7 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
                         { label: "Fitness Expiry", value: fmtDate(primaryVehicle.fitnessExpiry) },
                         { label: "Tax Valid Upto", value: fmtDate(primaryVehicle.taxValidUpto) },
                         { label: "Permit Valid Upto", value: fmtDate(primaryVehicle.permitValidUpto) },
+                        { label: "National Permit Valid Upto", value: fmtDate(primaryVehicle.nationalPermitValidUpto) },
                         { label: "PUCC Valid Upto", value: fmtDate(primaryVehicle.puccValidUpto) },
                       ].map((item) => (
                         <div key={item.label} className="bg-white px-3 py-2">

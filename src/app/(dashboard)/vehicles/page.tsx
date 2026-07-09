@@ -115,6 +115,7 @@ const fields: FormField[] = [
   { name: "fitnessExpiry", label: "Fitness Valid Upto", type: "date" },
   { name: "taxValidUpto", label: "Tax Valid Upto", type: "date" },
   { name: "permitValidUpto", label: "Permit Valid Upto", type: "date" },
+  { name: "nationalPermitValidUpto", label: "National Permit Valid Upto", type: "date" },
   { name: "puccValidUpto", label: "PUCC Valid Upto", type: "date" },
   { name: "notes", label: "Notes", type: "textarea", span: 2 },
   { name: "area", label: "Area / Region", type: "text", placeholder: "e.g. Kozhikode, Kannur…", span: 2 },
