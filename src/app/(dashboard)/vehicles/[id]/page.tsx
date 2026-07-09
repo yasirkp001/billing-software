@@ -190,6 +190,46 @@ export default async function VehicleDetailPage({
       {/* Liability & expenses ledger */}
       <VehicleExpenses vehicleId={vehicle.id} expenses={expenses} />
 
+      {/* Diesel Summary */}
+      {(() => {
+        const dieselRows = expenseRows.filter(e => e.category === "diesel");
+        const dieselAmount = dieselRows.reduce((s, e) => s + e.amount, 0);
+        const dieselPaid = dieselRows.reduce((s, e) => s + (e.paid ?? 0), 0);
+        const dieselBalance = dieselAmount - dieselPaid;
+        const dieselLiters = dieselRows.reduce((s, e) => s + (e.liter ?? 0), 0);
+        const dieselAdblue = dieselRows.reduce((s, e) => s + (e.adblue ?? 0), 0);
+        return (
+          <div className="overflow-hidden rounded-2xl border border-purple-100 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-purple-50 bg-purple-50/50 px-5 py-4">
+              <div>
+                <h3 className="text-sm font-bold text-gray-900">Diesel Summary</h3>
+                <p className="mt-0.5 text-xs text-gray-400">{dieselRows.length} diesel entries for this vehicle</p>
+              </div>
+              <Link
+                href="/diesel"
+                className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-purple-700 transition-colors"
+              >
+                <Icon name="expenses" size={13} /> View All Diesel
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-px bg-gray-100 sm:grid-cols-5">
+              {[
+                { label: "Total Amount", value: money(dieselAmount), color: "text-purple-700" },
+                { label: "Total Paid", value: money(dieselPaid), color: "text-green-700" },
+                { label: "Balance", value: dieselBalance > 0 ? money(dieselBalance) : "—", color: dieselBalance > 0 ? "text-red-700" : "text-gray-400" },
+                { label: "Total Liters", value: dieselLiters > 0 ? `${dieselLiters} L` : "—", color: "text-blue-700" },
+                { label: "Adblue", value: dieselAdblue > 0 ? `${dieselAdblue} L` : "—", color: "text-amber-700" },
+              ].map(c => (
+                <div key={c.label} className="bg-white px-5 py-4">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">{c.label}</p>
+                  <p className={`mt-1 text-base font-extrabold ${c.color}`}>{c.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Invoice bills */}
       <div id="invoices" className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm scroll-mt-24">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
